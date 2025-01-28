@@ -5,9 +5,8 @@ export interface Process {
     remainingTime: number; // Para Round Robin
   }
   
-  export interface Page {
-    id: number;
-    processId: number; // ID do processo dono da página
-    inMemory: boolean; // Se está na RAM
-  }
-  
+export interface Page {
+  id: number;
+  processId: number; // ID do processo dono da página
+  inMemory: boolean; // Se está na RAM
+}
