@@ -7,7 +7,7 @@ interface Props {
 
 export default function ProcessForm({ setProcesses }: Props) {
   const [arrivalTime, setArrivalTime] = useState(0);
-  const [burstTime, setBurstTime] = useState(0);
+  const [burstTime, setBurstTime] = useState(1);
 
   const addProcess = () => {
     setProcesses((prevProcesses) => [
@@ -29,6 +29,7 @@ export default function ProcessForm({ setProcesses }: Props) {
         placeholder="Tempo de chegada"
         value={arrivalTime}
         onChange={(e) => setArrivalTime(Number(e.target.value))}
+        min={0}
         className="p-2 m-2 border rounded"
       />
       <input
@@ -36,6 +37,7 @@ export default function ProcessForm({ setProcesses }: Props) {
         placeholder="Tempo de execução"
         value={burstTime}
         onChange={(e) => setBurstTime(Number(e.target.value))}
+        min={1}
         className="p-2 m-2 border rounded"
       />
       <button onClick={addProcess} className="ml-4 bg-green-500 px-4 py-2 rounded">
