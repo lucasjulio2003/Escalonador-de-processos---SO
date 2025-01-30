@@ -56,15 +56,6 @@ export default function ProcessForm({ setProcesses }: Props) {
         min={1}
         className="p-2 m-2 w-20 border rounded"
       />
-      <label className="text-white">Tempo de execução</label>
-      <input
-        type="number"
-        placeholder="numero de paginas"
-        value={numPages}
-        onChange={(e) => setNumPages(Number(e.target.value))}
-        min={1}
-        className="p-2 m-2 w-20 border rounded"
-      />
       <button onClick={addProcess} className="ml-4 bg-green-500 px-4 py-2 rounded">
         Adicionar
       </button>
