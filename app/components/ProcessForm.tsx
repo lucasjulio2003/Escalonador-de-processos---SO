@@ -6,59 +6,104 @@ interface Props {
 }
 
 export default function ProcessForm({ setProcesses }: Props) {
-  const [arrivalTime, setArrivalTime] = useState(0);
-  const [executationTime, setExecutationTime] = useState(1);
-  const [deadline, setDeadline] = useState(0);
-  const [numPages, setNumPages] = useState(0);
+  const [processesList, setProcessesList] = useState<Process[]>([]);
 
-
+  // Função para adicionar um novo processo
   const addProcess = () => {
-    setProcesses((prevProcesses) => [
-      ...prevProcesses,
-      {
-        id: prevProcesses.length + 1,
-        arrivalTime,
-        executationTime,
-        remainingTime: executationTime,
-        deadline: deadline,
-        numPages: numPages
-      }
-    ]);
+    const newProcess: Process = {
+      id: processesList.length + 1, // Gera um ID único
+      arrivalTime: 0,
+      executationTime: 1,
+      remainingTime: 1,
+      numPages:1,
+    };
+    setProcessesList((prev) => [...prev, newProcess]);
+  };
+
+
+  const updateProcess = (id: number, field: keyof Process, value: number) => {
+    setProcessesList((prev) =>
+      prev.map((process) =>
+        process.id === id ? { ...process, [field]: value } : process
+      )
+    );
+  };
+
+  const deleteProcess = (id: number) => {
+    setProcessesList((prev) => prev.filter((process) => process.id !== id));
+  };
+
+  const submitProcesses = () => {
+    setProcesses(() => processesList);
   };
 
   return (
-    <div className="p-4 border rounded bg-gray-800 text-black">
-      <h2 className="text-xl">Adicionar Processo</h2>
-      <label className="text-white">Tempo de chegada</label>
-      <input
-        type="number"
-        placeholder="Tempo de chegada"
-        value={arrivalTime}
-        onChange={(e) => setArrivalTime(Number(e.target.value))}
-        min={0}
-        className="p-2 m-2 w-20 border rounded"
-      />
-      <label className="text-white">Tempo de execução</label>
-      <input
-        type="number"
-        placeholder="Tempo de execução"
-        value={executationTime}
-        onChange={(e) => setExecutationTime(Number(e.target.value))}
-        min={1}
-        className="p-2 m-2 w-20 border rounded"
-      />
-      <label className="text-white">Deadline</label>
-      <input
-        type="number"
-        placeholder="Deadline"
-        value={deadline}
-        onChange={(e) => setDeadline(Number(e.target.value))}
-        min={1}
-        className="p-2 m-2 w-20 border rounded"
-      />
-      <button onClick={addProcess} className="ml-4 bg-green-500 px-4 py-2 rounded">
-        Adicionar
+    <div className="p-4 flex flex-col gap-5  space-x-4 border rounded bg-gray-800 text-white ">
+      <h2 className="text-xl mb-4">Gerenciamento de Processos</h2>
+
+      {/* Botão para adicionar um novo processo */}
+      <button
+        onClick={addProcess}
+        className="mb-4 bg-green-500 px-4 py-2 rounded"
+      >
+       Adicionar Processo
       </button>
+    
+      {/* Lista de processos */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-4">
+        {processesList.map((process) => (
+          <div key={process.id} className="flex flex-col border rounded bg-gray-700 p4 w-64">
+            <h3 className="text-lg">P{process.id}</h3>
+            <div className="">
+              
+              <div className="flex flex-row wrap">
+                <label>Tempo de Chegada:</label>
+                <input
+                  type="number"
+                  value={process.arrivalTime}
+                  onChange={(e) =>
+                    updateProcess(process.id, "arrivalTime", Number(e.target.value))
+                  }
+                  className="p-2 m-2 border rounded text-black w-full"
+                />
+              </div>
+
+              <div className="flex flex-row justify-center ">
+                <label>Tempo de Execução:</label>
+                <input
+                  type="number"
+                  value={process.executationTime}
+                  onChange={(e) =>
+                    updateProcess(process.id, "executationTime", Number(e.target.value))
+                  }
+                  className="p-2 m-2 border rounded text-black w-full" 
+                />
+              </div>
+
+              <div className="flex flex-row justify-ce p-2">
+                <label>Deadline:</label>
+                <input
+                  type="number"
+                  value={process.deadline}
+                  onChange={(e) =>
+                    updateProcess(process.id, "deadline", Number(e.target.value))
+                  }
+                  className="p-2 m-2 border rounded text-black w-full"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={() => deleteProcess(process.id)}
+              className="mt-2 bg-red-500 px-4 py-2 rounded"
+            >
+              Remover Processo
+            </button>
+          </div>
+        ))}
+      </div>
+
+      
     </div>
   );
 }
