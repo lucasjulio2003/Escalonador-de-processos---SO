@@ -1,8 +1,10 @@
 export interface Process {
     id: number;
     arrivalTime: number; // Tempo de chegada
-    burstTime: number; // Tempo de execução
+    executationTime: number; // Tempo de execução
     remainingTime: number; // Para Round Robin
+    deadline?: number,
+    numPages: number
   }
   
 export interface Page {

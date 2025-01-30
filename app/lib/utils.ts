@@ -14,7 +14,7 @@ export function fifo(processes: Process[]): Process[] {
  * Ordena os processos pelo tempo de execução (burst time)
  */
 export function sjf(processes: Process[]): Process[] {
-  return [...processes].sort((a, b) => a.burstTime - b.burstTime);
+  return [...processes].sort((a, b) => a.executationTime - b.executationTime);
 }
 
 /**
@@ -27,13 +27,13 @@ export function roundRobin(processes: Process[], quantum: number): Process[] {
 
   while (queue.length > 0) {
     let process = queue.shift()!;
-    if (process.burstTime > quantum) {
-      process.burstTime -= quantum;
+    if (process.executationTime > quantum) {
+      process.executationTime -= quantum;
       time += quantum;
       queue.push(process);
     } else {
-      time += process.burstTime;
-      process.burstTime = 0;
+      time += process.executationTime;
+      process.executationTime = 0;
       result.push(process);
     }
     }   
