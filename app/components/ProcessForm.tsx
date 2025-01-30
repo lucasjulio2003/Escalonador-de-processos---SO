@@ -89,6 +89,17 @@ export default function ProcessForm({ setProcesses }: Props) {
                   className="p-2 m-2 border rounded text-black w-full"
                 />
               </div>
+              <div className="flex flex-row justify-ce p-2">
+                <label>Numero de Paginas:</label>
+                <input
+                  type="number"
+                  value={process.numPages}
+                  onChange={(e) =>
+                    updateProcess(process.id, "numPages", Number(e.target.value))
+                  }
+                  className="p-2 m-2 border rounded text-black w-full"
+                />
+              </div>
             </div>
 
             <button
