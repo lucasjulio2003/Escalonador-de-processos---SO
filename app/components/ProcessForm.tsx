@@ -15,6 +15,7 @@ export default function ProcessForm({ setProcesses }: Props) {
       arrivalTime: 0,
       executationTime: 1,
       remainingTime: 1,
+      deadline: 0,
       numPages:1,
     };
     setProcessesList((prev) => [...prev, newProcess]);
@@ -33,9 +34,6 @@ export default function ProcessForm({ setProcesses }: Props) {
     setProcessesList((prev) => prev.filter((process) => process.id !== id));
   };
 
-  const submitProcesses = () => {
-    setProcesses(() => processesList);
-  };
 
   return (
     <div className="p-4 flex flex-col gap-5  space-x-4 border rounded bg-gray-800 text-white ">
@@ -79,7 +77,7 @@ export default function ProcessForm({ setProcesses }: Props) {
                   className="p-2 m-2 border rounded text-black w-full" 
                 />
               </div>
-
+              
               <div className="flex flex-row justify-ce p-2">
                 <label>Deadline:</label>
                 <input
