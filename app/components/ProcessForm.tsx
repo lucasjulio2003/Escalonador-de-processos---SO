@@ -63,57 +63,57 @@ export default function ProcessForm({ setProcesses }: Props) {
       <h3 className="text-lg">Novo Processo</h3>
       <div className="flex flex-col border rounded bg-gray-700 p-4 max-w-xl">
         
-        <section className="grid grid-cols-2 gap-4 m-2 space-y-2 bg-green-700">
+        <section className="grid grid-cols-2 gap-4 m-2 space-y-2 bg-green-700 ">
           {/*  */}
-          <section className="grid m-2 px-4 bg-red-700">
-          <div>
-            <label>Chegada:</label>
-            <input
-              type="number"
-              value={draftProcess.arrivalTime}
-              onChange={(e) =>
-                setDraftProcess({ ...draftProcess, arrivalTime: Number(e.target.value) })
-              }
-              className="p-2 m-2 border rounded text-black w-32"
-            />
-          </div>
+          <section className="grid m-2 px-4">
+            <div>
+              <label>Chegada:</label>
+              <input
+                type="number"
+                value={draftProcess.arrivalTime}
+                onChange={(e) =>
+                  setDraftProcess({ ...draftProcess, arrivalTime: Number(e.target.value) })
+                }
+                className="p-2 m-2 border rounded text-black w-32"
+              />
+            </div>
 
-          <div>
-            <label>Execução:</label>
-            <input
-              type="number"
-              value={draftProcess.executationTime}
-              onChange={(e) =>
-                setDraftProcess({ ...draftProcess, executationTime: Number(e.target.value) })
-              }
-              className="p-2 m-2 border rounded text-black w-32"
-            />
-          </div>
+            <div>
+              <label>Execução:</label>
+              <input
+                type="number"
+                value={draftProcess.executationTime}
+                onChange={(e) =>
+                  setDraftProcess({ ...draftProcess, executationTime: Number(e.target.value) })
+                }
+                className="p-2 m-2 border rounded text-black w-32"
+              />
+            </div>
           </section>
-          <section className="grid grid-cols-1 m-2 px-4 bg-blue-700">   
-          <div>
-            <label>Deadline:</label>
-            <input
-              type="number"
-              value={draftProcess.deadline}
-              onChange={(e) =>
-                setDraftProcess({ ...draftProcess, deadline: Number(e.target.value) })
-              }
-              className="p-2 m-2 border rounded text-black w-32"
-            />
-          </div>
+          <section className="grid grid-cols-1 m-2 px-4 ">   
+            <div>
+              <label>Deadline:</label>
+              <input
+                type="number"
+                value={draftProcess.deadline}
+                onChange={(e) =>
+                  setDraftProcess({ ...draftProcess, deadline: Number(e.target.value) })
+                }
+                className="p-2 m-2 border rounded text-black w-32"
+              />
+            </div>
 
-          <div>
-            <label>Páginas:</label>
-            <input
-              type="number"
-              value={draftProcess.numPages}
-              onChange={(e) =>
-                setDraftProcess({ ...draftProcess, numPages: Number(e.target.value) })
-              }
-              className="p-2 m-2 border rounded text-black w-32"
-            />
-          </div>
+            <div className="flex flex-col">
+              <label>Páginas:</label>
+              <input
+                type="number"
+                value={draftProcess.numPages}
+                onChange={(e) =>
+                  setDraftProcess({ ...draftProcess, numPages: Number(e.target.value) })
+                }
+                className="p-2 m-2 border rounded text-black w-32"
+              />
+            </div>
           </section>
         </section>
 
@@ -162,7 +162,7 @@ export default function ProcessForm({ setProcesses }: Props) {
               </section>
 
               {/* coluna 2 */}  
-              <section className="grid grid-cols-1 gap-4 px-4 pr-4 ">
+              <section className="grid grid-cols-1 gap-4 px-4 ">
               <div>
                 <label>Deadline:</label>
                 <input
