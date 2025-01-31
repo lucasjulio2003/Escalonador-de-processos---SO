@@ -34,6 +34,10 @@ export default function ProcessForm({ setProcesses }: Props) {
     setProcessesList((prev) => prev.filter((process) => process.id !== id));
   };
 
+  const submitProcesses = () => {
+    setProcesses(() => processesList);
+  };
+
 
   return (
     <div className="p-4 flex flex-col gap-5  space-x-4 border rounded bg-gray-800 text-white ">
@@ -42,7 +46,7 @@ export default function ProcessForm({ setProcesses }: Props) {
       {/* Botão para adicionar um novo processo */}
       <button
         onClick={addProcess}
-        className="mb-4 bg-green-500 px-4 py-2 rounded"
+        className="mb-4 bg-green-500 hover:bg-green-600 active:bg-green-700 px-4 py-2 rounded"
       >
        Adicionar Processo
       </button>
@@ -111,7 +115,12 @@ export default function ProcessForm({ setProcesses }: Props) {
           </div>
         ))}
       </div>
-
+      <button
+        onClick={submitProcesses}
+        className="mt-4 bg-blue-500 px-4 py-2 rounded"
+      >
+        Enviar Processos para Escalonamento
+      </button>
       
     </div>
   );
