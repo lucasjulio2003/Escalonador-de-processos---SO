@@ -46,7 +46,7 @@ export default function ProcessForm({ setProcesses }: Props) {
       {/* Botão para adicionar um novo processo */}
       <button
         onClick={addProcess}
-        className="mb-4 bg-green-500 px-4 py-2 rounded"
+        className="mb-4 bg-green-500 hover:bg-green-600 active:bg-green-700 px-4 py-2 rounded"
       >
        Adicionar Processo
       </button>
