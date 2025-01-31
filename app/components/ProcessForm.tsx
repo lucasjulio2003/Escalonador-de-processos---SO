@@ -7,20 +7,34 @@ interface Props {
 
 export default function ProcessForm({ setProcesses }: Props) {
   const [processesList, setProcessesList] = useState<Process[]>([]);
+  const [draftProcess, setDraftProcess] = useState<Process>({
+    id: 0, // ID temporário (não usado na lista final)
+    arrivalTime: 0,
+    executationTime: 1,
+    remainingTime: 1,
+    deadline: 0,
+    numPages: 1,
+  });
 
-  // Função para adicionar um novo processo
   const addProcess = () => {
     const newProcess: Process = {
-      id: processesList.length + 1, // Gera um ID único
+      ...draftProcess,
+      id: processesList.length + 1, // Gera ID único baseado no tamanho da lista
+      remainingTime: draftProcess.executationTime, // Mantém o tempo restante igual ao de execução
+    };
+    
+    setProcessesList((prev) => [...prev, newProcess]);
+    
+    // Reseta o draft para valores padrão
+    setDraftProcess({
+      id: 0,
       arrivalTime: 0,
       executationTime: 1,
       remainingTime: 1,
       deadline: 0,
-      numPages:1,
-    };
-    setProcessesList((prev) => [...prev, newProcess]);
+      numPages: 1,
+    });
   };
-
 
   const updateProcess = (id: number, field: keyof Process, value: number) => {
     setProcessesList((prev) =>
@@ -41,28 +55,86 @@ export default function ProcessForm({ setProcesses }: Props) {
     setProcesses(() => processesList);
   };
 
-
   return (
-    <div className="p-4 flex flex-col gap-5  space-x-4 border rounded bg-gray-800 text-white ">
+    <div className="p-4 flex flex-col gap-5 space-x-4 border rounded bg-gray-800 text-white">
       <h2 className="text-xl mb-4">Gerenciamento de Processos</h2>
 
-      {/* Botão para adicionar um novo processo */}
-      <button
-        onClick={addProcess}
-        className="mb-4 bg-green-500 hover:bg-green-600 active:bg-green-700 px-4 py-2 rounded"
-      >
-       Adicionar Processo
-      </button>
-    
-      {/* Lista de processos */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-4">
+      {/* Formulário do Draft (sempre visível) */}
+      <h3 className="text-lg">Novo Processo</h3>
+      <div className="flex flex-col border rounded bg-gray-700 p-4 max-w-xl">
+        
+        <section className="grid grid-cols-2 gap-4 m-2 space-y-2 bg-green-700">
+          {/*  */}
+          <section className="grid m-2 px-4 bg-red-700">
+          <div>
+            <label>Chegada:</label>
+            <input
+              type="number"
+              value={draftProcess.arrivalTime}
+              onChange={(e) =>
+                setDraftProcess({ ...draftProcess, arrivalTime: Number(e.target.value) })
+              }
+              className="p-2 m-2 border rounded text-black w-32"
+            />
+          </div>
+
+          <div>
+            <label>Execução:</label>
+            <input
+              type="number"
+              value={draftProcess.executationTime}
+              onChange={(e) =>
+                setDraftProcess({ ...draftProcess, executationTime: Number(e.target.value) })
+              }
+              className="p-2 m-2 border rounded text-black w-32"
+            />
+          </div>
+          </section>
+          <section className="grid grid-cols-1 m-2 px-4 bg-blue-700">   
+          <div>
+            <label>Deadline:</label>
+            <input
+              type="number"
+              value={draftProcess.deadline}
+              onChange={(e) =>
+                setDraftProcess({ ...draftProcess, deadline: Number(e.target.value) })
+              }
+              className="p-2 m-2 border rounded text-black w-32"
+            />
+          </div>
+
+          <div>
+            <label>Páginas:</label>
+            <input
+              type="number"
+              value={draftProcess.numPages}
+              onChange={(e) =>
+                setDraftProcess({ ...draftProcess, numPages: Number(e.target.value) })
+              }
+              className="p-2 m-2 border rounded text-black w-32"
+            />
+          </div>
+          </section>
+        </section>
+
+        <button
+          onClick={addProcess}
+          className="mt-2 bg-green-500 hover:bg-green-600 px-4 py-2 rounded"
+        >
+          Adicionar Processo
+        </button>
+      </div>
+
+      {/* Lista de processos adicionados */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5  gap-4 px-4 ">
         {processesList.map((process) => (
-          <div key={process.id} className="flex flex-col border rounded bg-gray-700 p4 w-64">
+          <div key={process.id} className="flex flex-col border rounded bg-gray-700 p-4 w-64 Object-cove">
             <h3 className="text-lg">P{process.id}</h3>
-            <div className="">
-              
-              <div className="flex flex-row wrap">
-                <label>Tempo de Chegada:</label>
+            <section className="grid grid-cols-2 space-y-1">
+              {/*coluna 1 */}
+              <section className="grid grid-cols-1 gap-4 px-4 ">
+              <div>
+                <label>Chegada:</label>
                 <input
                   type="number"
                   value={process.arrivalTime}
@@ -72,9 +144,9 @@ export default function ProcessForm({ setProcesses }: Props) {
                   className="p-2 m-2 border rounded text-black w-full"
                 />
               </div>
-
-              <div className="flex flex-row justify-center ">
-                <label>Tempo de Execução:</label>
+             
+              <div>
+                <label>Execução:</label>
                 <input
                   type="number"
                   value={process.executationTime}
@@ -84,11 +156,14 @@ export default function ProcessForm({ setProcesses }: Props) {
                       updateProcess(process.id, "remainingTime", Number(e.target.value));
                     }
                   }
-                  className="p-2 m-2 border rounded text-black w-full" 
+                  className="p-2 m-2 border rounded text-black w-full"
                 />
               </div>
-              
-              <div className="flex flex-row justify-ce p-2">
+              </section>
+
+              {/* coluna 2 */}  
+              <section className="grid grid-cols-1 gap-4 px-4 pr-4 ">
+              <div>
                 <label>Deadline:</label>
                 <input
                   type="number"
@@ -99,8 +174,9 @@ export default function ProcessForm({ setProcesses }: Props) {
                   className="p-2 m-2 border rounded text-black w-full"
                 />
               </div>
-              <div className="flex flex-row justify-ce p-2">
-                <label>Numero de Paginas:</label>
+
+              <div>
+                <label>Páginas:</label>
                 <input
                   type="number"
                   value={process.numPages}
@@ -110,24 +186,25 @@ export default function ProcessForm({ setProcesses }: Props) {
                   className="p-2 m-2 border rounded text-black w-full"
                 />
               </div>
-            </div>
+              </section>
+            </section>
 
             <button
               onClick={() => deleteProcess(process.id)}
-              className="mt-2 bg-red-500 px-4 py-2 rounded"
+              className="mt-2 bg-red-500 hover:bg-red-700 px-4 py-2 rounded"
             >
               Remover Processo
             </button>
           </div>
         ))}
       </div>
+
       <button
         onClick={submitProcesses}
         className="mt-4 bg-blue-500 px-4 py-2 rounded"
       >
         Enviar Processos para Escalonamento
       </button>
-      
     </div>
   );
 }
