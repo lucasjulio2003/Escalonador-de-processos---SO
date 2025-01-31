@@ -28,6 +28,9 @@ export default function ProcessForm({ setProcesses }: Props) {
         process.id === id ? { ...process, [field]: value } : process
       )
     );
+
+    console.log("processesList", processesList);
+
   };
 
   const deleteProcess = (id: number) => {
@@ -75,8 +78,11 @@ export default function ProcessForm({ setProcesses }: Props) {
                 <input
                   type="number"
                   value={process.executationTime}
-                  onChange={(e) =>
-                    updateProcess(process.id, "executationTime", Number(e.target.value))
+                  onChange={(e) => 
+                    {
+                      updateProcess(process.id, "executationTime", Number(e.target.value));
+                      updateProcess(process.id, "remainingTime", Number(e.target.value));
+                    }
                   }
                   className="p-2 m-2 border rounded text-black w-full" 
                 />
