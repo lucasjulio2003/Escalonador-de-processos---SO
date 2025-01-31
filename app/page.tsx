@@ -14,7 +14,7 @@ export default function Home() {
       <h1 className="text-3xl font-bold text-center mb-6">Simulador de Escalonamento</h1>
 
       {/* Formulário de Entrada */}
-      <ProcessForm setProcesses={setProcesses} />
+      <ProcessForm processes={processes} setProcesses={setProcesses} />
 
       {/* Configuração de Algoritmo */}
       <div className="my-4">

@@ -7,6 +7,7 @@ export function useScheduler() {
   const [algorithm, setAlgorithm] = useState<"FIFO" | "SJF" | "RR">("FIFO");
 
   const runScheduler = () => {
+    console.log("Executando escalonador...");
     setProcesses((prevProcesses) => {
       if (algorithm === "FIFO") return fifo(prevProcesses);
       if (algorithm === "SJF") return sjf(prevProcesses);

@@ -1,14 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Process } from "../lib/types";
 
 interface Props {
-  setProcesses: (callback: (prev: Process[]) => Process[]) => void;
+  processes: Process[]; // Lista de processos do estado global
+  setProcesses: (processes: Process[]) => void; // Função para atualizar o estado global
 }
 
 export default function ProcessForm({ setProcesses }: Props) {
   const [processesList, setProcessesList] = useState<Process[]>([]);
 
-  // Função para adicionar um novo processo
+  
+  useEffect(() => {
+    setProcesses(processesList);
+  }, [processesList, setProcesses]);
+ 
   const addProcess = () => {
     const newProcess: Process = {
       id: processesList.length + 1, // Gera um ID único
@@ -115,12 +120,6 @@ export default function ProcessForm({ setProcesses }: Props) {
           </div>
         ))}
       </div>
-      <button
-        onClick={submitProcesses}
-        className="mt-4 bg-blue-500 px-4 py-2 rounded"
-      >
-        Enviar Processos para Escalonamento
-      </button>
       
     </div>
   );
