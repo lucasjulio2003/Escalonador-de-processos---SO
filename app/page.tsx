@@ -19,11 +19,11 @@ export default function Home() {
       {/* Configuração de Algoritmo */}
       <div className="my-4">
         <label className="mr-4">Escolha o algoritmo:</label>
-        <select value={algorithm} onChange={(e) => setAlgorithm(e.target.value as any)} className="p-2 border rounded">
+        <select value={algorithm} onChange={(e) => setAlgorithm(e.target.value as any)} className="p-2 border rounded text-black">
           <option value="FIFO">FIFO</option>
           <option value="SJF">SJF</option>
         </select>
-        <button onClick={runScheduler} className="ml-4 bg-blue-500 text-white px-4 py-2 rounded">Executar</button>
+        <button onClick={runScheduler} className="ml-4 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white px-4 py-2 rounded">Executar</button>
       </div>
 
       {/* Exibição da Memória */}
