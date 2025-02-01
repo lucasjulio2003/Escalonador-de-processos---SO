@@ -47,7 +47,8 @@ export default function Home() {
       <MemoryView processes={processes} />
 
       {/* Gráfico de Gantt */}
-      <GanttChart processes={processes} />
+      <GanttChart processes={processes} algorithm={algorithm} quantum={quantum}/>
+
 
       {/* Log de Execução */}
       
