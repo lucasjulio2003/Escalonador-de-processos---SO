@@ -63,7 +63,7 @@ export default function ProcessForm({ setProcesses }: Props) {
       <h3 className="text-lg">Novo Processo</h3>
       <div className="flex flex-col border rounded bg-gray-700 p-4 max-w-xl">
         
-        <section className="grid grid-cols-2 gap-4 m-2 space-y-2 bg-green-700 ">
+        <section className="grid grid-cols-2 gap-4 m-2 space-y-2">
           {/*  */}
           <section className="grid m-2 px-4">
             <div>
