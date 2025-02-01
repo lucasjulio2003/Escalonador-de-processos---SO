@@ -8,7 +8,10 @@ import { useScheduler } from "./hooks/useScheduler";
 import SelectInputs from "./components/SelectInputs";
 
 export default function Home() {
-  const { processes, setProcesses, algorithm, setAlgorithm, quantum, setQuantum, overHead, setOverHead, runScheduler } = useScheduler();
+
+  const { processes, setProcesses, algorithm, setAlgorithm, quantum, setQuantum, runScheduler } = useScheduler();
+  const [overhead, setOverhead] = useState(1);
+
 
   return (
     <div className="container mx-auto p-6">
@@ -27,12 +30,12 @@ export default function Home() {
           <option value="RR">Round Robin</option>
         </select>
 
-        { /*<SelectInputs/> */ }
+
         {/* Exibir campo Quantum apenas se Round Robin for selecionado */}
-        { ( algorithm === "RR" || algorithm === "EDF") && (
-          <section className="mt-4 mb-4">
-          <div className="inline-block space-x-4">
-            <label className="text-white text-sm">Quantum:</label>
+        {["RR", "EDF"].includes(algorithm) && (
+          <div className="inline-block ml-4">
+            <label className="block text-white text-sm">Quantum:</label>
+
             <input
               type="number"
               value={quantum}
@@ -42,16 +45,21 @@ export default function Home() {
             />
           </div>
 
-          <div className="inline-block space-x-4  ml-4 ">
-            <label className="text-white text-sm">Sobrecarga</label>
-            <input 
+        )}
+
+        {/* Exibir campo de Sobrecarga apenas se RR ou EDF forem selecionados */}
+        {["RR", "EDF"].includes(algorithm) && (
+          <div className="inline-block ml-4">
+            <label className="block text-white text-sm">Sobrecarga:</label>
+            <input
               type="number"
-              value={overHead}
-              onChange={(e) => setOverHead(Number(e.target.value))}
-              placeholder = "Sobrecarga"
-              className="p-2 border rounded text-black w-20"/>
+              value={overhead}
+              onChange={(e) => setOverhead(Number(e.target.value))}
+              className="p-2 border rounded text-black w-20"
+              placeholder="Sobrecarga"
+            />
           </div>
-          </section>
+
         )}
 
         <button onClick={runScheduler} className="ml-4 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white px-4 py-2 rounded">Executar</button>
@@ -61,7 +69,8 @@ export default function Home() {
       <MemoryView processes={processes} />
 
       {/* Gráfico de Gantt */}
-      <GanttChart processes={processes} />
+      <GanttChart processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} />
+
 
       {/* Log de Execução */}
       

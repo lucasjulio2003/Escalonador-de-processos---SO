@@ -7,6 +7,7 @@ export interface Process {
     numPages: number,
     systemOverhead: number,
     turnaroundTime?: number;
+    completionTime?: number;
   }
   
 export interface Page {

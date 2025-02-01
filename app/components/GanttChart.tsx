@@ -1,29 +1,47 @@
 import { useState, useEffect } from "react";
 import { Process } from "../lib/types";
+import { fifo, sjf, edf, roundRobin } from "../lib/utils";
 
-function simulateQueue(processes: Process[], limitTime: number) {
-  // (exatamente como você já tem)
+function simulateQueue(processes: Process[], algorithm: string, quantum: number, overhead: number) {
+  let scheduledProcesses: Process[] = [];
+
+
+  // Escolhe o algoritmo correto para a simulação
+  switch (algorithm) {
+    case "FIFO":
+      scheduledProcesses = fifo(processes);
+      break;
+    case "SJF":
+      scheduledProcesses = sjf(processes);
+      break;
+    case "EDF":
+      scheduledProcesses = edf(processes, quantum, overhead);
+      break;
+    case "RR":
+      scheduledProcesses = roundRobin(processes, quantum, overhead);
+      break;
+  }
+
   let currentTime = 0;
   const history: Process[][] = [];
   const queue: Process[] = [];
 
-
-  while (processes.some((p) => p.remainingTime > 0)) {  
-    // Adiciona e executa processos…
-    processes.forEach((p) => {
-      if (p.arrivalTime <= currentTime && p.remainingTime > 0 && !queue.includes(p)) {
+  while (scheduledProcesses.some((p) => p.executationTime > 0)) {
+    // Adiciona processos que chegaram ao sistema e ainda não foram executados
+    scheduledProcesses.forEach((p) => {
+      if (p.arrivalTime <= currentTime && p.executationTime > 0 && !queue.includes(p)) {
         queue.push(p);
       }
     });
 
     if (queue.length > 0) {
-      queue[0].remainingTime--;
+      queue[0].executationTime--; // Executa o primeiro processo
     }
 
-    history.push(queue.map((p) => ({ ...p })));
+    history.push(queue.map((p) => ({ ...p }))); // Salva o estado atual da fila
 
-    if (queue.length > 0 && queue[0].remainingTime === 0) {
-      queue.shift();
+    if (queue.length > 0 && queue[0].executationTime === 0) {
+      queue.shift(); // Remove o processo finalizado da fila
     }
     currentTime++;
   }
@@ -31,12 +49,12 @@ function simulateQueue(processes: Process[], limitTime: number) {
   return history;
 }
 
-export default function GanttChart({ processes }: { processes: Process[] }) {
+export default function GanttChart({ processes, algorithm, quantum, overhead }: { processes: Process[], algorithm: string, quantum: number, overhead: number }) {
   const limitTime = 10;
 
   // Fazemos a simulação apenas 1 vez, por exemplo, no "mount"
   const processesCopy = processes.map((p) => ({ ...p }));
-  const history = simulateQueue(processesCopy, limitTime);
+  const history = simulateQueue(processesCopy, algorithm, quantum, overhead);
 
   // Estado que vai dizer até qual coluna do histórico vamos exibir
   const [displayIndex, setDisplayIndex] = useState(0);
@@ -48,14 +66,13 @@ export default function GanttChart({ processes }: { processes: Process[] }) {
         if (prev < history.length - 1) {
           return prev + 1;
         } else {
-          // Se já estamos na última coluna, paramos o intervalo
           clearInterval(interval);
           return prev;
         }
       });
     }, 1000); // 1000 ms = 1 segundo
 
-    return () => clearInterval(interval); 
+    return () => clearInterval(interval);
   }, [history]);
 
   return (
@@ -76,11 +93,13 @@ export default function GanttChart({ processes }: { processes: Process[] }) {
         {history.slice(0, displayIndex + 1).map((queue, i) => (
           <div key={i} className="flex flex-col space-y-2">
             {processes.map((p) => {
-              let color = queue.find((q) => q.id === p.id) 
-                           ? "bg-yellow-500" 
-                           : "bg-gray-500";
+              let color = "bg-gray-500"; // Cinza por padrão (não está na fila)
+
+              if (queue.find((q) => q.id === p.id)) {
+                color = "bg-yellow-500"; // Processo está na fila esperando
+              }
               if (queue.length > 0 && queue[0].id === p.id) {
-                color = "bg-green-500";
+                color = "bg-green-500"; // Processo está rodando
               }
 
               return (
@@ -93,3 +112,5 @@ export default function GanttChart({ processes }: { processes: Process[] }) {
     </div>
   );
 }
+
+

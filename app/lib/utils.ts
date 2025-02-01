@@ -6,7 +6,13 @@ import { Process } from "./types";
  * Ordena os processos pelo tempo de chegada
  */
 export function fifo(processes: Process[]): Process[] {
-  return [...processes].sort((a, b) => a.arrivalTime - b.arrivalTime);
+  let time = 0;
+  return [...processes]
+    .sort((a, b) => a.arrivalTime - b.arrivalTime)
+    .map((p) => {
+      time = Math.max(time, p.arrivalTime) + p.executationTime;
+      return { ...p, completionTime: time };
+    });
 }
 
 /**
@@ -14,13 +20,42 @@ export function fifo(processes: Process[]): Process[] {
  * Ordena os processos pelo tempo de execução (burst time)
  */
 export function sjf(processes: Process[]): Process[] {
-  return [...processes].sort((a, b) => a.executationTime - b.executationTime);
+  let time = 0;
+  let remainingProcesses = [...processes].sort((a, b) => a.arrivalTime - b.arrivalTime);
+  let result: Process[] = [];
+
+  while (remainingProcesses.length > 0) {
+    // Filtrar processos disponíveis no tempo atual
+    let availableProcesses = remainingProcesses.filter((p) => p.arrivalTime <= time);
+
+    // Se não há processos disponíveis, avançamos o tempo até o próximo chegar
+    if (availableProcesses.length === 0) {
+      time = remainingProcesses[0].arrivalTime;
+      availableProcesses = [remainingProcesses[0]];
+    }
+
+    // Escolher o processo com menor tempo de execução
+    let shortestJob = availableProcesses.reduce((prev, curr) => 
+      prev.executationTime < curr.executationTime ? prev : curr
+    );
+
+    // Executar o processo pelo tempo correto
+    time += shortestJob.executationTime;
+    
+    result.push({ ...shortestJob, completionTime: time });
+
+    // Remover processo concluído
+    remainingProcesses = remainingProcesses.filter((p) => p.id !== shortestJob.id);
+  }
+
+  return result;
 }
 
 /**
  * Round Robin - Considera um quantum fixo
  */
-export function roundRobin(processes: Process[], quantum: number): Process[] {
+export function roundRobin(processes: Process[], quantum: number, overhead: number): Process[] {
+
   let queue = [...processes.map(p => ({ ...p, remainingTime: p.executationTime }))];
   let result: Process[] = [];
   let time = 0;
@@ -29,22 +64,20 @@ export function roundRobin(processes: Process[], quantum: number): Process[] {
 
   while (queue.length > 0) {
     let process = queue.shift()!;
-    
-    let executionTime = Math.min(quantum, process.remainingTime); // Garante que não exceda o tempo restante
+    let executionTime = Math.min(quantum, process.remainingTime);
+
     process.remainingTime -= executionTime;
     time += executionTime;
 
-    executionHistory.push({ id: process.id, executedTime: executionTime });
-
+    // Adiciona sobrecarga apenas se o processo ainda tiver tempo restante
     if (process.remainingTime > 0) {
-      queue.push(process); // Se ainda tem tempo restante, volta para a fila
+      time += overhead;
+      queue.push(process);
     } else {
-      process.turnaroundTime = time - process.arrivalTime;
-      result.push(process);
+      result.push({ ...process, completionTime: time });
     }
   }
 
-  console.log("Histórico de Execução Round Robin:", executionHistory);
   return result;
 }
 
@@ -53,8 +86,30 @@ export function roundRobin(processes: Process[], quantum: number): Process[] {
  * EDF - Earliest Deadline First (Não preemptivo)
  * Ordena os processos pelo menor deadline
  */
-export function edf(processes: Process[]): Process[] {
-  return [...processes].sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity));
+
+export function edf(processes: Process[], quantum: number, overhead: number): Process[] {
+  let queue = [...processes.map(p => ({ ...p, remainingTime: p.executationTime }))];
+  let result: Process[] = [];
+  let time = 0;
+
+  while (queue.length > 0) {
+    queue.sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity)); // Ordena pelo menor deadline
+    let process = queue.shift()!;
+    let executionTime = Math.min(quantum, process.remainingTime);
+
+    process.remainingTime -= executionTime;
+    time += executionTime;
+
+    // Adiciona sobrecarga se o processo não terminou
+    if (process.remainingTime > 0) {
+      time += overhead;
+      queue.push(process);
+    } else {
+      result.push({ ...process, completionTime: time });
+    }
+  }
+
+  return result;
 }
 
 
@@ -128,14 +183,6 @@ export async function executeProcessesWithDelay(
  * Turnaround = tempo de espera + tempo de execução.
  */
 export function calculateTurnaround(processes: Process[]): number {
-  let currentTime = 0;
-  let turnaroundSum = 0;
-
-  processes.forEach((process) => {
-    const turnaround = currentTime - process.arrivalTime + process.executationTime;
-    turnaroundSum += turnaround;
-    currentTime += process.executationTime;
-  });
-
+  let turnaroundSum = processes.reduce((sum, p) => sum + (p.completionTime! - p.arrivalTime), 0);
   return processes.length > 0 ? turnaroundSum / processes.length : 0;
 }
