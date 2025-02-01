@@ -27,7 +27,7 @@ export default function Home() {
       </div>
 
       {/* Exibição da Memória */}
-      <MemoryView />
+      <MemoryView processes={processes} />
 
       {/* Gráfico de Gantt */}
       <GanttChart processes={processes} />
