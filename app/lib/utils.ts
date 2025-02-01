@@ -54,20 +54,22 @@ export function sjf(processes: Process[]): Process[] {
 /**
  * Round Robin - Considera um quantum fixo
  */
-export function roundRobin(processes: Process[], quantum: number): Process[] {
+export function roundRobin(processes: Process[], quantum: number, overhead: number): Process[] {
   let queue = [...processes.map(p => ({ ...p, remainingTime: p.executationTime }))];
   let result: Process[] = [];
   let time = 0;
 
   while (queue.length > 0) {
-    let process = queue.shift()!; // Pega o primeiro processo da fila
+    let process = queue.shift()!;
     let executionTime = Math.min(quantum, process.remainingTime);
 
     process.remainingTime -= executionTime;
     time += executionTime;
 
+    // Adiciona sobrecarga apenas se o processo ainda tiver tempo restante
     if (process.remainingTime > 0) {
-      queue.push(process); // Se ainda tem tempo restante, volta para a fila
+      time += overhead;
+      queue.push(process);
     } else {
       result.push({ ...process, completionTime: time });
     }
@@ -77,32 +79,30 @@ export function roundRobin(processes: Process[], quantum: number): Process[] {
 }
 
 
-
-
 /**
  * EDF - Earliest Deadline First (Não preemptivo)
  * Ordena os processos pelo menor deadline
  */
-export function edf(processes: Process[]): Process[] {
-  let time = 0;
-  let remainingProcesses = [...processes].sort((a, b) => a.arrivalTime - b.arrivalTime);
+export function edf(processes: Process[], quantum: number, overhead: number): Process[] {
+  let queue = [...processes.map(p => ({ ...p, remainingTime: p.executationTime }))];
   let result: Process[] = [];
+  let time = 0;
 
-  while (remainingProcesses.length > 0) {
-    let availableProcesses = remainingProcesses.filter((p) => p.arrivalTime <= time);
+  while (queue.length > 0) {
+    queue.sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity)); // Ordena pelo menor deadline
+    let process = queue.shift()!;
+    let executionTime = Math.min(quantum, process.remainingTime);
 
-    if (availableProcesses.length === 0) {
-      time = remainingProcesses[0].arrivalTime;
-      availableProcesses = [remainingProcesses[0]];
+    process.remainingTime -= executionTime;
+    time += executionTime;
+
+    // Adiciona sobrecarga se o processo não terminou
+    if (process.remainingTime > 0) {
+      time += overhead;
+      queue.push(process);
+    } else {
+      result.push({ ...process, completionTime: time });
     }
-
-    let earliestDeadline = availableProcesses.reduce((prev, curr) => 
-      (prev.deadline ?? Infinity) < (curr.deadline ?? Infinity) ? prev : curr
-    );
-
-    time += earliestDeadline.executationTime;
-    result.push({ ...earliestDeadline, completionTime: time });
-    remainingProcesses = remainingProcesses.filter((p) => p.id !== earliestDeadline.id);
   }
 
   return result;

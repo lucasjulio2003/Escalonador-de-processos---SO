@@ -8,6 +8,7 @@ import { useScheduler } from "./hooks/useScheduler";
 
 export default function Home() {
   const { processes, setProcesses, algorithm, setAlgorithm, quantum, setQuantum, runScheduler } = useScheduler();
+  const [overhead, setOverhead] = useState(1);
 
   return (
     <div className="container mx-auto p-6">
@@ -27,7 +28,7 @@ export default function Home() {
         </select>
 
         {/* Exibir campo Quantum apenas se Round Robin for selecionado */}
-        {algorithm === "RR" && (
+        {["RR", "EDF"].includes(algorithm) && (
           <div className="inline-block ml-4">
             <label className="block text-white text-sm">Quantum:</label>
             <input
@@ -40,6 +41,20 @@ export default function Home() {
           </div>
         )}
 
+        {/* Exibir campo de Sobrecarga apenas se RR ou EDF forem selecionados */}
+        {["RR", "EDF"].includes(algorithm) && (
+          <div className="inline-block ml-4">
+            <label className="block text-white text-sm">Sobrecarga:</label>
+            <input
+              type="number"
+              value={overhead}
+              onChange={(e) => setOverhead(Number(e.target.value))}
+              className="p-2 border rounded text-black w-20"
+              placeholder="Sobrecarga"
+            />
+          </div>
+        )}
+
         <button onClick={runScheduler} className="ml-4 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white px-4 py-2 rounded">Executar</button>
       </div>
 
@@ -47,7 +62,7 @@ export default function Home() {
       <MemoryView processes={processes} />
 
       {/* Gráfico de Gantt */}
-      <GanttChart processes={processes} algorithm={algorithm} quantum={quantum}/>
+      <GanttChart processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} />
 
 
       {/* Log de Execução */}

@@ -6,6 +6,7 @@ export function useScheduler() {
   const [processes, setProcesses] = useState<Process[]>([]);
   const [algorithm, setAlgorithm] = useState<"FIFO" | "SJF" | "RR" | "EDF">("FIFO");
   const [quantum, setQuantum] = useState<number>(2);
+  const [overhead, setOverhead] = useState<number>(1); // ADICIONADO
   const [turnaroundAvg, setTurnaroundAvg] = useState<number>(0);
   const [isExecuting, setIsExecuting] = useState<boolean>(false);
 
@@ -24,10 +25,10 @@ export function useScheduler() {
           scheduledProcesses = sjf(prevProcesses);
           break;
         case "EDF":
-          scheduledProcesses = edf(prevProcesses);
+          scheduledProcesses = edf(prevProcesses, quantum, overhead);
           break;
         case "RR":
-          scheduledProcesses = roundRobin(prevProcesses, quantum);
+          scheduledProcesses = roundRobin(prevProcesses, quantum, overhead);
           break;
       }
 

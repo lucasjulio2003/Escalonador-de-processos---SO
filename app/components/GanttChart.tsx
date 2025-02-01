@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Process } from "../lib/types";
 import { fifo, sjf, edf, roundRobin } from "../lib/utils";
 
-function simulateQueue(processes: Process[], algorithm: string, quantum: number) {
+function simulateQueue(processes: Process[], algorithm: string, quantum: number, overhead: number) {
   let scheduledProcesses: Process[] = [];
+
 
   // Escolhe o algoritmo correto para a simulação
   switch (algorithm) {
@@ -14,10 +15,10 @@ function simulateQueue(processes: Process[], algorithm: string, quantum: number)
       scheduledProcesses = sjf(processes);
       break;
     case "EDF":
-      scheduledProcesses = edf(processes);
+      scheduledProcesses = edf(processes, quantum, overhead);
       break;
     case "RR":
-      scheduledProcesses = roundRobin(processes, quantum);
+      scheduledProcesses = roundRobin(processes, quantum, overhead);
       break;
   }
 
@@ -48,12 +49,12 @@ function simulateQueue(processes: Process[], algorithm: string, quantum: number)
   return history;
 }
 
-export default function GanttChart({ processes, algorithm, quantum }: { processes: Process[], algorithm: string, quantum: number }) {
+export default function GanttChart({ processes, algorithm, quantum, overhead }: { processes: Process[], algorithm: string, quantum: number, overhead: number }) {
   const limitTime = 10;
 
   // Fazemos a simulação apenas 1 vez, por exemplo, no "mount"
   const processesCopy = processes.map((p) => ({ ...p }));
-  const history = simulateQueue(processesCopy, algorithm, quantum);
+  const history = simulateQueue(processesCopy, algorithm, quantum, overhead);
 
   // Estado que vai dizer até qual coluna do histórico vamos exibir
   const [displayIndex, setDisplayIndex] = useState(0);
