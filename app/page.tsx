@@ -65,12 +65,12 @@ export default function Home() {
 
         <button onClick={runScheduler} className="ml-4 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white px-4 py-2 rounded">Executar</button>
       </div>
+      
+      {/* Gráfico de Gantt */}
+      <GanttChart processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} />
 
       {/* Exibição da Memória */}
       <MemoryView processes={processes} />
-
-      {/* Gráfico de Gantt */}
-      <GanttChart processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} />
 
 
       {/* Log de Execução */}
