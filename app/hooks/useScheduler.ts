@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Process } from "../lib/types";
+
 import { fifo, sjf, edf, roundRobin, calculateTurnaround } from "../lib/utils";
+
 
 export function useScheduler() {
   const [processes, setProcesses] = useState<Process[]>([]);
@@ -9,6 +11,7 @@ export function useScheduler() {
   const [overhead, setOverhead] = useState<number>(1); // ADICIONADO
   const [turnaroundAvg, setTurnaroundAvg] = useState<number>(0);
   const [isExecuting, setIsExecuting] = useState<boolean>(false);
+
 
   const runScheduler = () => {
     if (isExecuting) return;
@@ -43,5 +46,6 @@ export function useScheduler() {
   };
 
   return { processes, setProcesses, algorithm, setAlgorithm, quantum, setQuantum, runScheduler, turnaroundAvg, isExecuting };
+
 }
 

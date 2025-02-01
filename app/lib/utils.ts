@@ -55,9 +55,12 @@ export function sjf(processes: Process[]): Process[] {
  * Round Robin - Considera um quantum fixo
  */
 export function roundRobin(processes: Process[], quantum: number, overhead: number): Process[] {
+
   let queue = [...processes.map(p => ({ ...p, remainingTime: p.executationTime }))];
   let result: Process[] = [];
   let time = 0;
+
+  let executionHistory: { id: number; executedTime: number }[] = [];
 
   while (queue.length > 0) {
     let process = queue.shift()!;
@@ -83,6 +86,7 @@ export function roundRobin(processes: Process[], quantum: number, overhead: numb
  * EDF - Earliest Deadline First (Não preemptivo)
  * Ordena os processos pelo menor deadline
  */
+
 export function edf(processes: Process[], quantum: number, overhead: number): Process[] {
   let queue = [...processes.map(p => ({ ...p, remainingTime: p.executationTime }))];
   let result: Process[] = [];
@@ -107,7 +111,6 @@ export function edf(processes: Process[], quantum: number, overhead: number): Pr
 
   return result;
 }
-
 
 
 import { Page } from "./types";
