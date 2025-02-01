@@ -4,7 +4,9 @@ export interface Process {
     executationTime: number; // Tempo de execução
     remainingTime: number; // Para Round Robin
     deadline?: number,
-    numPages: number
+    numPages: number,
+    systemOverhead: number,
+    turnaroundTime?: number;
   }
   
 export interface Page {
