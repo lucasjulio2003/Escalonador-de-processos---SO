@@ -7,7 +7,8 @@ function simulateQueue(processes: Process[], limitTime: number) {
   const history: Process[][] = [];
   const queue: Process[] = [];
 
-  for (let i = 0; i < limitTime; i++) {
+
+  while (processes.some((p) => p.remainingTime > 0)) {  
     // Adiciona e executa processos…
     processes.forEach((p) => {
       if (p.arrivalTime <= currentTime && p.remainingTime > 0 && !queue.includes(p)) {
