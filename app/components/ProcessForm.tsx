@@ -1,19 +1,24 @@
 import { useState } from "react";
 import { Process } from "../lib/types";
+import { useScheduler } from "../hooks/useScheduler";
 
 interface Props {
   setProcesses: (callback: (prev: Process[]) => Process[]) => void;
+  
 }
 
 export default function ProcessForm({ setProcesses }: Props) {
+  const { algorithm, setAlgorithm, quantum, setQuantum } = useScheduler()
   const [processesList, setProcessesList] = useState<Process[]>([]);
+  const [readyToExecute, setReadyToExecute] = useState(false);
   const [draftProcess, setDraftProcess] = useState<Process>({
-    id: 0, // ID temporário (não usado na lista final)
+    id: 0, // ID temporário (não usado na lista final
     arrivalTime: 0,
     executationTime: 1,
     remainingTime: 1,
     deadline: 0,
     numPages: 1,
+    systemOverhead: 0, // Nova propriedade de sobrecarga do sistema
   });
 
   const addProcess = () => {
@@ -33,19 +38,20 @@ export default function ProcessForm({ setProcesses }: Props) {
       remainingTime: 1,
       deadline: 0,
       numPages: 1,
+      systemOverhead: 0,
     });
   };
 
   const updateProcess = (id: number, field: keyof Process, value: number) => {
+    if (value < 0) return; // Impede valores negativos
+  
     setProcessesList((prev) =>
       prev.map((process) =>
         process.id === id ? { ...process, [field]: value } : process
       )
     );
-
-    console.log("processesList", processesList);
-
   };
+  
 
   const deleteProcess = (id: number) => {
     setProcessesList((prev) => prev.filter((process) => process.id !== id));
@@ -58,7 +64,6 @@ export default function ProcessForm({ setProcesses }: Props) {
   return (
     <div className="p-4 flex flex-col gap-5 space-x-4 border rounded bg-gray-800 text-white">
       <h2 className="text-xl mb-4">Gerenciamento de Processos</h2>
-
       {/* Formulário do Draft (sempre visível) */}
       <h3 className="text-lg">Novo Processo</h3>
       <div className="flex flex-col border rounded bg-gray-700 p-4 max-w-xl">
@@ -173,6 +178,16 @@ export default function ProcessForm({ setProcesses }: Props) {
                   }
                   className="p-2 m-2 border rounded text-black w-full"
                 />
+
+                {/* <label>Sobrecarga do Sistema:</label>
+                <input 
+                type="number" 
+                value={draftProcess.systemOverhead} 
+                onChange={(e) => 
+                  setDraftProcess({ ...draftProcess, systemOverhead: Number(e.target.value) })
+                } 
+                className="p-2 m-2 border rounded text-black w-32" 
+                /> */}
               </div>
 
               <div>
