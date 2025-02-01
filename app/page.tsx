@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState } from "react";
 import ProcessForm from "./components/ProcessForm";
 import MemoryView from "./components/MemoryView";
 import GanttChart from "./components/GanttChart";
-import ExecutionLog from "./components/ExecutionLogs";
+// import ExecutionLog from "./components/ExecutionLogs";
 import { useScheduler } from "./hooks/useScheduler";
-import SelectInputs from "./components/SelectInputs";
+// import SelectInputs from "./components/SelectInputs";
 
 export default function Home() {
 

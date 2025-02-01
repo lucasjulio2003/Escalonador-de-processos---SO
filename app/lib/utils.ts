@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable prefer-const */
 // lib/utils.ts
 import { Process } from "./types";
 

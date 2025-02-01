@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Process } from "../lib/types";
-import { useScheduler } from "../hooks/useScheduler";
+// import { useScheduler } from "../hooks/useScheduler";
 
 interface Props {
   setProcesses: (callback: (prev: Process[]) => Process[]) => void;
@@ -8,9 +8,9 @@ interface Props {
 }
 
 export default function ProcessForm({ setProcesses }: Props) {
-  const { algorithm, setAlgorithm, quantum, setQuantum } = useScheduler()
+  // const { algorithm, setAlgorithm, quantum, setQuantum } = useScheduler()
   const [processesList, setProcessesList] = useState<Process[]>([]);
-  const [readyToExecute, setReadyToExecute] = useState(false);
+  // const [readyToExecute, setReadyToExecute] = useState(false);
   const [draftProcess, setDraftProcess] = useState<Process>({
     id: 0, // ID temporário (não usado na lista final
     arrivalTime: 0,

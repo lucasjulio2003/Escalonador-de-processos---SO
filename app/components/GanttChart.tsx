@@ -50,8 +50,6 @@ function simulateQueue(processes: Process[], algorithm: string, quantum: number,
 }
 
 export default function GanttChart({ processes, algorithm, quantum, overhead }: { processes: Process[], algorithm: string, quantum: number, overhead: number }) {
-  const limitTime = 10;
-
   // Fazemos a simulação apenas 1 vez, por exemplo, no "mount"
   const processesCopy = processes.map((p) => ({ ...p }));
   const history = simulateQueue(processesCopy, algorithm, quantum, overhead);
