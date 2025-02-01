@@ -12,7 +12,7 @@ export default function ProcessForm({ setProcesses }: Props) {
   const [processesList, setProcessesList] = useState<Process[]>([]);
   const [readyToExecute, setReadyToExecute] = useState(false);
   const [draftProcess, setDraftProcess] = useState<Process>({
-    id: 0, // ID temporário (não usado na lista final)
+    id: 0, // ID temporário (não usado na lista final
     arrivalTime: 0,
     executationTime: 1,
     remainingTime: 1,
