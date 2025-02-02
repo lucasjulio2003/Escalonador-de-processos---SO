@@ -24,7 +24,7 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
   useEffect(() => {
     const interval = setInterval(() => {
       setDisplayIndex((prev) => (prev < history.length - 1 ? prev + 1 : prev));
-    }, 990);
+    }, 490);
     const currentProcess = history[displayIndex]?.processes[0];
     console.log("Current Process: ", currentProcess);
     loadPages(currentProcess);
