@@ -1,10 +1,32 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { useEffect, useState } from "react";
 import { useMemory } from "../hooks/useMemory";
+import { Process } from "../lib/types";
+import { simulateQueue } from "../lib/utils";
 
-export default function MemoryView() {
-  const { memory, pageFaults, algorithm, setAlgorithm } = useMemory();
+export default function MemoryView({ processes, algorithm, quantum, overhead, isRunning }: { processes: Process[], algorithm: string, quantum: number, overhead: number , isRunning: boolean}) {
+  const { memory, pageFaults, loadPage, setAlgorithm } = useMemory();
 
+  const history = simulateQueue(processes, algorithm, quantum, overhead);
+  const [displayIndex, setDisplayIndex] = useState(0);
+
+  const loadPages = (process: Process) => {
+    for (let i = 0; i < process?.numPages; i++) {
+      loadPage({ id: i, processId: process.id, inMemory: false });
+    }
+  }
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDisplayIndex((prev) => (prev < history.length - 1 ? prev + 1 : prev));
+    }, 990);
+    const currentProcess = history[displayIndex]?.processes[0];
+    console.log("Current Process: ", currentProcess);
+    loadPages(currentProcess);
+    console.log(displayIndex);
+    return () => clearInterval(interval);
+  }, [history]);
 
   return (
     <div className="p-4 border rounded bg-gray-700 text-black my-4">
@@ -29,7 +51,7 @@ export default function MemoryView() {
           {memory.map((page) => (
                 <div
                 key={`${page.processId}-${page.id}`}
-                className={`p-2 text-xs text-center border rounded h-12 flex items-center justify-center ${page.processId === 0 ? 'bg-gray-500 text-transparent' : ''}`}
+                className={`p-2 text-xs text-center border rounded h-12 flex items-center justify-center ${page.processId === 0 && isRunning ? 'bg-gray-500 text-transparent' : ''}`}
                 >
                 {page.processId !== 0 && (
                   <>

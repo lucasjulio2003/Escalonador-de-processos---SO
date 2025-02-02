@@ -95,7 +95,6 @@ function simulateQueue(processes: Process[], algorithm: string, quantum: number,
   return history;
 }
 
-
 export default function GanttChart({ processes, algorithm, quantum, overhead }: { processes: Process[], algorithm: string, quantum: number, overhead: number }) {
   const [history, setHistory] = useState<{ processes: Process[], overheadProcess: number | null }[]>([]);
   const [displayIndex, setDisplayIndex] = useState(0);
