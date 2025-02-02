@@ -27,13 +27,18 @@ export function simulateQueue(processes: Process[], algorithm: string, quantum: 
   const queue: Process[] = []; // Fila de processos prontos para execução
   let overheadProcess: number | null = null; // Identifica se um processo sofreu sobrecarga
 
+  console.log("Processos escalonados:", scheduledProcesses);
+
   while (scheduledProcesses.some((p) => p.executationTime > 0) || queue.length > 0) {
-    scheduledProcesses.forEach((p) => {
+    scheduledProcesses.forEach((p: Process) => {
       if (p.arrivalTime <= currentTime && p.executationTime > 0 && !queue.includes(p)) {
         queue.push(p);
+        console.log(`⏰ Tempo ${currentTime}: P${p.id} chegou à fila de prontos`);
         p.executedTime = 0;
+        console.log("Fila de processos:", queue);
       }
     });
+
 
     if (queue.length > 0) {
       if ((algorithm === "RR" || algorithm === "EDF") && overheadProcess !== null) {
@@ -93,6 +98,8 @@ export function simulateQueue(processes: Process[], algorithm: string, quantum: 
     currentTime++;
   }
 
+  console.log("Histórico de execução:", history);
+
   return history;
 }
 
@@ -150,6 +157,8 @@ export function sjf(processes: Process[]): Process[] {
     // 🔹 Ordena novamente após a chegada de novos processos
     queue.sort((a, b) => a.executationTime - b.executationTime);
   }
+
+  console.log("Resultado SJF:", result);
 
   return result;
 }
