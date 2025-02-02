@@ -14,98 +14,103 @@ export function simulateQueue(
   quantum: number,
   overhead: number
 ) {
-  // Copy processes to avoid mutating original
+  // Copy the processes
   const procs = processes.map((p) => ({
     ...p,
-    remainingTime: p.executationTime, // ensure we have remainingTime for any type
-    executedTime: 0,                  // how many units this process has run
+    remainingTime: p.executationTime,
+    executedTime: 0,
   }));
 
   let currentTime = 0;
-  let activeProcess: Process | null = null; // The process currently using CPU
-  let overheadTimeLeft = 0;                 // Tracks overhead for RR/EDF
-  let sliceTimeLeft = 0;                    // Tracks quantum usage for RR/EDF
+  let activeProcess: Process | null = null;
+  let overheadTimeLeft = 0;
+  let sliceTimeLeft = 0;
+  // A new variable to remember who triggered overhead
+  let lastOverheadTriggerId: number | null = null;
 
-  // The queue of ready processes (but not currently running)
   const readyQueue: Process[] = [];
-
-  // For the Gantt chart, record per time‐step:
-  //   processes[]: who is in the queue + running process
-  //   overheadProcess: if overhead is being applied
   const history: { processes: Process[]; overheadProcess: number | null }[] = [];
 
-  // A convenient helper: check if we've finished all processes
+  // Helper to check if we’re done
   const allDone = () => procs.every((p) => p.remainingTime <= 0);
 
   while (!allDone() || activeProcess !== null) {
-    // 1️⃣ Add newly arrived processes to the ready queue
+    // 1) Add newly arrived processes
     procs.forEach((p) => {
       if (p.arrivalTime === currentTime) {
         readyQueue.push(p);
       }
     });
 
-    // 2️⃣ If no active process and not in overhead, pick next from queue (if any)
-    if (activeProcess === null && overheadTimeLeft === 0 && readyQueue.length > 0) {
-      // Sort the queue if SJF or EDF before picking the next
+    // 2) If CPU is free & no overhead, pick next
+    if (!activeProcess && overheadTimeLeft === 0 && readyQueue.length > 0) {
       if (algorithm === "SJF") {
         readyQueue.sort((a, b) => a.executationTime - b.executationTime);
       } else if (algorithm === "EDF") {
         readyQueue.sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity));
       }
+      // FIFO/RR default is just the front
 
-      // Pick next process from the front
       activeProcess = readyQueue.shift()!;
-
-      // Initialize slice time if RR or EDF
       if (algorithm === "RR" || algorithm === "EDF") {
         sliceTimeLeft = Math.min(activeProcess.remainingTime, quantum);
       }
+      // Clear last overhead ID if we’re switching to a new process
+      lastOverheadTriggerId = null;
     }
 
-    // 3️⃣ If we are in overhead time, just push overhead state & decrement overhead
+    // 3) Overhead time
     if (overheadTimeLeft > 0) {
-      history.push({ processes: [...readyQueue], overheadProcess: activeProcess?.id ?? null });
+      // During overhead, the CPU is effectively idle.
+      // No active process runs. The overhead is attributed
+      // to the last process that triggered the switch.
+      history.push({
+        processes: [...readyQueue],        // all are waiting
+        overheadProcess: lastOverheadTriggerId // used by Gantt to color overhead in red
+      });
+    
       overheadTimeLeft--;
       currentTime++;
       continue;
     }
+    
+    
 
-    // 4️⃣ Execute 1 time unit if we have an active process
+    // 4) Execute if we have a process
     if (activeProcess) {
       activeProcess.remainingTime--;
       activeProcess.executedTime++;
 
-      // Push current snapshot: activeProcess is front (green), others in queue (yellow)
+      // Gantt step for normal CPU usage
       history.push({
-        processes: [activeProcess, ...readyQueue], // running first, rest waiting
+        processes: [activeProcess, ...readyQueue],
         overheadProcess: null,
       });
 
       currentTime++;
 
-      // 4a) If done, set completionTime and reset activeProcess
+      // 4a) If finished
       if (activeProcess.remainingTime <= 0) {
         activeProcess.completionTime = currentTime;
-        activeProcess = null;
-      } else {
-        // 4b) If RR or EDF, update sliceTimeLeft
-        if (algorithm === "RR" || algorithm === "EDF") {
-          sliceTimeLeft--;
-          // If slice expired, we must push overhead + requeue the process (if still not done)
-          if (sliceTimeLeft === 0) {
-            overheadTimeLeft = overhead; // overhead to pay
-            if (activeProcess && activeProcess.remainingTime > 0) {
-              // Re-queue the active process
-              readyQueue.push(activeProcess);
-            }
-            activeProcess = null;
+        activeProcess = null; // CPU is free
+      } 
+      // 4b) Not finished, check quantum for RR/EDF
+      else if (algorithm === "RR" || algorithm === "EDF") {
+        sliceTimeLeft--;
+        if (sliceTimeLeft === 0) {
+          // We will incur overhead
+          overheadTimeLeft = overhead;
+          lastOverheadTriggerId = activeProcess.id;
+
+          // Re-queue if it still has time
+          if (activeProcess.remainingTime > 0) {
+            readyQueue.push(activeProcess);
           }
+          activeProcess = null;
         }
       }
     } else {
-      // 5️⃣ CPU is idle if we have no active process
-      // Push an idle snapshot
+      // 5) Idle
       history.push({ processes: [], overheadProcess: null });
       currentTime++;
     }
@@ -113,6 +118,7 @@ export function simulateQueue(
 
   return history;
 }
+
 
 /**
  * FIFO - Escalonamento First In, First Out
