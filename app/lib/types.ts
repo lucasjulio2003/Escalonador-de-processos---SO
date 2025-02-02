@@ -8,6 +8,7 @@ export interface Process {
     systemOverhead: number,
     turnaroundTime?: number;
     completionTime?: number;
+    executedTime: number;
   }
   
 export interface Page {
