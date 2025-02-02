@@ -95,7 +95,7 @@ function simulateQueue(processes: Process[], algorithm: string, quantum: number,
   return history;
 }
 
-export default function GanttChart({ processes, algorithm, quantum, overhead }: { processes: Process[], algorithm: string, quantum: number, overhead: number }) {
+export default function GanttChart({ processes, algorithm, quantum, overhead, isRunning }: { processes: Process[], algorithm: string, quantum: number, overhead: number, isRunning: boolean }) {
   const [history, setHistory] = useState<{ processes: Process[], overheadProcess: number | null }[]>([]);
   const [displayIndex, setDisplayIndex] = useState(0);
 
@@ -139,6 +139,7 @@ export default function GanttChart({ processes, algorithm, quantum, overhead }: 
       </div>
 
       {/* Exibição do gráfico */}
+      {isRunning && (
       <div className="flex space-x-2">
         <div className="flex flex-col space-y-2">
           {processes.map((p) => (
@@ -166,7 +167,7 @@ export default function GanttChart({ processes, algorithm, quantum, overhead }: 
             })}
           </div>
         ))}
-      </div>
+      </div>)}
     </div>
   );
 }

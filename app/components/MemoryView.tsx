@@ -12,6 +12,10 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
   const [displayIndex, setDisplayIndex] = useState(0);
 
   const loadPages = (process: Process) => {
+    if (!isRunning) {
+      setDisplayIndex(0);
+      return;
+    }
     for (let i = 0; i < process?.numPages; i++) {
       loadPage({ id: i, processId: process.id, inMemory: false });
     }
@@ -47,24 +51,7 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
       </div>
       <div className="flex flex-row">
         {/* Exibição da memória */}
-        <div className="grid grid-cols-10 gap-1.5 p-2 w-1/2">
-          {memory.map((page) => (
-                <div
-                key={`${page.processId}-${page.id}`}
-                className={`p-2 text-xs text-center border rounded h-12 flex items-center justify-center ${page.processId === 0 && isRunning ? 'bg-gray-500 text-transparent' : ''}`}
-                >
-                {page.processId !== 0 && (
-                  <>
-                  P{page.processId}
-                  <br />
-                  {page.id}
-                  </>
-                )}
-                </div>
-          ))}
-        </div>
-        {/* Exibição do Disco */}
-        <div className="grid grid-cols-10 gap-1.5 p-2 w-1/2">
+        { isRunning && <div className="grid grid-cols-10 gap-1.5 p-2 w-1/2">
           {memory.map((page) => (
                 <div
                 key={`${page.processId}-${page.id}`}
@@ -79,7 +66,24 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
                 )}
                 </div>
           ))}
-        </div>
+        </div>}
+        {/* Exibição do Disco */}
+        { isRunning && <div className="grid grid-cols-10 gap-1.5 p-2 w-1/2">
+          {memory.map((page) => (
+                <div
+                key={`${page.processId}-${page.id}`}
+                className={`p-2 text-xs text-center border rounded h-12 flex items-center justify-center ${page.processId === 0 ? 'bg-gray-500 text-transparent' : ''}`}
+                >
+                {page.processId !== 0 && (
+                  <>
+                  P{page.processId}
+                  <br />
+                  {page.id}
+                  </>
+                )}
+                </div>
+          ))}
+        </div>}
       </div>
     </div>
   );

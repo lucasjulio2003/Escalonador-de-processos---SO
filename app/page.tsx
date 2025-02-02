@@ -86,16 +86,15 @@ export default function Home() {
       </div>
       
       {/* Gráfico de Gantt */}
-      {isRunning && (
-        <GanttChart processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} />
-      )}
+      
+        <GanttChart processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} isRunning={isRunning} />
 
       {/* { !isRunning &&
         <MemoryView processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} isRunning/>} */}
 
       {/* Exibição da Memória */}
-      { isRunning &&
-        <MemoryView processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} isRunning/>}
+      
+        <MemoryView processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} isRunning={isRunning}/>
 
       {/* Log de Execução */}
       
