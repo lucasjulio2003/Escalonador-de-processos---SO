@@ -45,6 +45,7 @@ export default function Home() {
 
             <input
               type="number"
+              min={1}
               value={quantum}
               onChange={(e) => setQuantum(Number(e.target.value))}
               className="p-2 border rounded text-black w-20"
@@ -60,6 +61,7 @@ export default function Home() {
             <label className="block text-white text-sm">Sobrecarga:</label>
             <input
               type="number"
+              min={1}
               value={overhead}
               onChange={(e) => setOverhead(Number(e.target.value))}
               className="p-2 border rounded text-black w-20"
