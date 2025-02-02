@@ -3,7 +3,12 @@ import { Process } from "../lib/types";
 import { fifo, sjf, edf, roundRobin } from "../lib/utils";
 
 function simulateQueue(processes: Process[], algorithm: string, quantum: number, overhead: number) {
-  let scheduledProcesses: Process[] = [];
+  let scheduledProcesses: Process[] = []; // Lista de processos escalonados
+
+  console.log(`🟢 Iniciando simulação com algoritmo: ${algorithm}`);
+  console.log(`🔢 Processos iniciais:`, JSON.parse(JSON.stringify(processes)));
+
+  // Escolhe o algoritmo de escalonamento
   switch (algorithm) {
     case "FIFO":
       scheduledProcesses = fifo(processes);
@@ -19,41 +24,71 @@ function simulateQueue(processes: Process[], algorithm: string, quantum: number,
       break;
   }
 
-  let currentTime = 0;
-  const history: { processes: Process[], overheadProcess: number | null }[] = [];
-  const queue: Process[] = [];
-  let overheadProcess: number | null = null; // Guarda qual processo sofreu sobrecarga
+  let currentTime = 0; // Controla o tempo atual da simulação
+  const history: { processes: Process[], overheadProcess: number | null }[] = []; // Histórico de execução dos processos
+  const queue: Process[] = []; // Fila de processos prontos para execução
+  let overheadProcess: number | null = null; // Identifica se um processo sofreu sobrecarga
+
+  console.log(`🚀 Processos escalonados:`, JSON.parse(JSON.stringify(scheduledProcesses)));
 
   while (scheduledProcesses.some((p) => p.executationTime > 0)) {
+    console.log(`⏳ Tempo ${currentTime}: Verificando processos...`);
+
     scheduledProcesses.forEach((p) => {
       if (p.arrivalTime <= currentTime && p.executationTime > 0 && !queue.includes(p)) {
         queue.push(p);
+        console.log(`✅ Tempo ${currentTime}: Processo P${p.id} chegou e entrou na fila.`);
       }
     });
 
-    if (queue.length > 0) {
-      // Aplica sobrecarga apenas para RR e EDF
-      if ((algorithm === "RR" || algorithm === "EDF") && overheadProcess !== null) {
-        history.push({ processes: [...queue], overheadProcess }); // Marca sobrecarga no processo específico
-        currentTime += overhead;
-        overheadProcess = null;
-      } else {
-        queue[0].executationTime--;
-        history.push({ processes: [...queue], overheadProcess: null });
+    if (queue.length > 0) { // Se há processos na fila, executar
+      console.log(`▶️ Tempo ${currentTime}: Processos na fila:`, queue.map(p => `P${p.id}`));
 
-        if (queue.length > 0 && queue[0].executationTime === 0) {
-          if (algorithm === "RR" || algorithm === "EDF") {
-            overheadProcess = queue[0].id; // Apenas EDF e RR sofrem sobrecarga
-          }
-          queue.shift();
+      if ((algorithm === "RR" || algorithm === "EDF") && overheadProcess !== null) {
+        console.log(`⚠️ Tempo ${currentTime}: Aplicando sobrecarga ao processo P${overheadProcess}`);
+         // Registra sobrecarga
+
+        for (let i = 0; i < overhead; i++) {
+          history.push({ processes: [...queue], overheadProcess }); 
+          currentTime++;
         }
+        overheadProcess = null; // Reseta indicador de sobrecarga
+      } else {
+        let process = queue[0];
+        console.log(`🔹 Tempo ${currentTime}: Executando P${process.id}`);
+
+        process.executationTime--;
+        history.push({ processes: [...queue], overheadProcess: null }); // Salva estado no histórico
+
+        if (process.executationTime === 0) {
+          console.log(`✅ Tempo ${currentTime}: P${process.id} finalizado.`);
+          queue.shift(); // Remove processo concluído
+        }
+
+        if (algorithm === "RR" || algorithm === "EDF") {
+          if (process.executationTime === quantum) {
+            if (queue.length == 1) {
+              break
+            }
+            overheadProcess = process.id;
+            console.log(`🔴 Tempo ${currentTime}: P${process.id} sofreu preempção e será pausado.`);
+            queue.push(queue.shift()!); // Move o processo para o final da fila
+            currentTime += overhead; // Aplica sobrecarga
+          }
+        }
+
+        
       }
     } else {
-      history.push({ processes: [], overheadProcess: null });
+      console.log(`⏳ Tempo ${currentTime}: Nenhum processo pronto para execução.`);
+      history.push({ processes: [], overheadProcess: null }); // Registra tempo ocioso
     }
 
-    currentTime++;
+    currentTime++; // Incrementa tempo da simulação
   }
+
+  console.log("🏁 Simulação finalizada!");
+  console.log("📊 Histórico final:", JSON.parse(JSON.stringify(history)));
 
   return history;
 }
