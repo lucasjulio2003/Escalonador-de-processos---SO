@@ -19,9 +19,9 @@ function simulateQueue(processes: Process[], algorithm: string, quantum: number,
       break;
   }
 
-  let currentTime = 0;
-  const history: { processes: Process[], overheadProcess: number | null }[] = [];
-  const queue: Process[] = [];
+  let currentTime = 0; // tempo atula da simul
+  const history: { processes: Process[], overheadProcess: number | null }[] = []; // history
+  const queue: Process[] = []; // queue
   let overheadProcess: number | null = null; // Guarda qual processo sofreu sobrecarga
 
   while (scheduledProcesses.some((p) => p.executationTime > 0)) {

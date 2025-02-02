@@ -14,17 +14,26 @@ export function useScheduler() {
   const [isExecuting, setIsExecuting] = useState<boolean>(false);
   const [isRunning, setIsRunning] = useState<boolean>(false);
 
+  const setQuantumValue = (value: number) => {
+    setQuantum(value);
+  };
+  
+  const setOverheadValue = (value: number) => {
+    setOverhead(value);
+  };
+  
+
   // Apenas salva os processos sem rodar imediatamente
   const saveProcesses = (newProcesses: Process[]) => {
     setProcesses(newProcesses);
     setIsRunning(false); // Não iniciar o gráfico ainda!
   };
-  
 
 
   // Só executa a simulação quando o botão "Executar" for pressionado
   const runScheduler = () => {
     if (isExecuting || processes.length === 0) return;
+
     setIsExecuting(true);
     setIsRunning(true); // Agora pode rodar o gráfico
 
@@ -46,6 +55,8 @@ export function useScheduler() {
           break;
       }
 
+      // console.log("Processos após escalonamento:", scheduledProcesses);
+
       // Calcular o turnaround médio corretamente
       const turnaround = calculateTurnaround(scheduledProcesses);
       setTurnaroundAvg(turnaround);
@@ -58,17 +69,18 @@ export function useScheduler() {
 
   return {
     processes,
-    saveProcesses, // Modificado para salvar sem executar
+    saveProcesses, 
     algorithm,
     setAlgorithm,
     quantum,
-    setQuantum,
+    setQuantum: setQuantumValue, // Usa a função que exibe no console
     overhead,
-    setOverhead,
+    setOverhead: setOverheadValue, // Usa a função que exibe no console
     runScheduler,
     turnaroundAvg,
     isExecuting,
-    isRunning, // Estado que controla quando os processos estão prontos
+    isRunning, 
   };
+  
 }
 
