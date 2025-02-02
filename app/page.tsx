@@ -70,7 +70,7 @@ export default function Home() {
       <GanttChart processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} />
 
       {/* Exibição da Memória */}
-      <MemoryView processes={processes} />
+      <MemoryView />
 
 
       {/* Log de Execução */}
