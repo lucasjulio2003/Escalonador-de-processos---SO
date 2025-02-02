@@ -65,44 +65,47 @@ export default function GanttChart({
           {/* Column of labels: top cell = time index, others = process labels */}
           <div className="flex flex-col space-y-2">
             <div className="bg-gray-500 text-white p-1 text-[8px] h-4 flex justify-center items-center">t</div>
-            {processes.map((p) => (
+            {processes
+              .slice()
+              .sort((a, b) => a.id - b.id)
+              .map((p) => (
               <div key={p.id}
                 className="bg-blue-500 text-white p-1 text-[8px] h-4 flex justify-center items-center"
               >
                 P{p.id}
               </div>
-            ))}
+              ))}
           </div>
 
           {history.slice(0, displayIndex + 1).map((step, i) => (
             <div key={i} className="flex flex-col space-y-2">
               {/* Top cell shows the current time index */}
               <div
-                className="bg-blue-500 text-white p-1 text-[8px] h-4 flex justify-center items-center"
+              className="bg-blue-500 text-white p-1 text-[8px] h-4 flex justify-center items-center"
               >
-                {i}
+              {i}
               </div>
               {/* For each process, decide the color */}
-              {processes.map((p) => {
+              {processes
+              .slice()
+              .sort((a, b) => a.id - b.id)
+              .map((p) => {
+                let color = "bg-gray-500"; // Default color for idle or not relevant
+
                 // Overhead coloring for RR/EDF if this step is overhead
                 if (step.overheadProcess === p.id) {
-                  return <div key={p.id} className="bg-red-500 text-white p-2 h-4" />;
-                }
-
+                color = "bg-red-500";
+                } else {
                 // If ANY process is in step.processes, we have at least one occupant
                 // The first in step.processes is running = green
                 // The rest in step.processes are waiting = yellow
-                // If p is not in step.processes -> idle or not relevant
                 const idx = step.processes.findIndex((proc) => proc.id === p.id);
-                if (idx === -1) {
-                  // Not in queue and not overhead -> CPU idle or process not arrived yet or finished
-                  return <div key={p.id} className="bg-gray-500 text-white p-2 h-4" />;
+                if (idx !== -1) {
+                  color = idx === 0 ? "bg-green-500" : "bg-yellow-500";
+                }
                 }
 
-                // Found the process in `step.processes`
-                return idx === 0
-                  ? <div key={p.id} className="bg-green-500 text-white p-2 h-4" /> // running
-                  : <div key={p.id} className="bg-yellow-500 text-white p-2 h-4" />; // waiting
+                return <div key={p.id} className={`${color} text-white p-2 h-4`} />;
               })}
             </div>
           ))}
