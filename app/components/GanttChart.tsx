@@ -57,7 +57,7 @@ function simulateQueue(processes: Process[], algorithm: string, quantum: number,
 
         overheadProcess = null;
       } else {
-        let process = queue[0];
+        const process = queue[0];
         process.executationTime--;
         process.executedTime++;
         history.push({ processes: [...queue], overheadProcess: null });
