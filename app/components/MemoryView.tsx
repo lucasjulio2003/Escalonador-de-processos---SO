@@ -55,11 +55,17 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
           {memory.map((page) => (
                 <div
                 key={`${page.processId}-${page.id}`}
-                className={`p-2 text-xs text-center border rounded h-12 flex items-center justify-center ${page.processId === 0 ? 'bg-gray-500 text-transparent' : ''}`}
+                className={`p-2 text-xs text-center border rounded h-12 flex items-center justify-center ${page.processId === 0 ? 'bg-gray-500' : ''}`}
                 >
                 {page.processId !== 0 && (
                   <>
                   P{page.processId}
+                  <br />
+                  {page.id}
+                  </>
+                )}
+                {page.processId == 0 && (
+                  <>
                   <br />
                   {page.id}
                   </>

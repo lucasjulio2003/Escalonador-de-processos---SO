@@ -237,9 +237,30 @@ export function edf(processes: Process[], quantum: number, overhead: number): Pr
  * Page replacement examples...
  * (unchanged from your code)
  */
+let fifoIndex = 0; // Índice de substituição FIFO
+
 export function fifoReplacement(memory: Page[], newPage: Page): Page[] {
-  return [...memory.slice(1), newPage];
+  // Se houver um espaço vazio (processId === 0), insere a página nova nele
+  const emptyIndex = memory.findIndex(page => page.processId === 0);
+  if (emptyIndex !== -1) {
+    memory[emptyIndex] = newPage;
+  } else {
+    // Substitui a página mais antiga (FIFO) pelo novo processo
+    memory[fifoIndex] = newPage;
+
+    // Atualiza o índice FIFO para a próxima posição de substituição
+    fifoIndex = (fifoIndex + 1) % memory.length;
+  }
+
+  return memory;
 }
+
+
+
+/**
+ * Algoritmo LRU (Least Recently Used)
+ * Remove a página menos recentemente usada.
+ */
 export function lruReplacement(memory: Page[], newPage: Page): Page[] {
   return [...memory.slice(1), newPage];
 }
