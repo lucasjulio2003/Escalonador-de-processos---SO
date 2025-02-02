@@ -18,7 +18,8 @@ export default function ProcessForm({ setProcesses }: Props) {
     remainingTime: 1,
     deadline: 0,
     numPages: 1,
-    systemOverhead: 0, // Nova propriedade de sobrecarga do sistema
+    systemOverhead: 0,
+    executedTime: 0, // Nova propriedade de sobrecarga do sistema
   });
 
   const addProcess = () => {
@@ -39,6 +40,7 @@ export default function ProcessForm({ setProcesses }: Props) {
       deadline: 0,
       numPages: 1,
       systemOverhead: 0,
+      executedTime: 0,
     });
   };
 

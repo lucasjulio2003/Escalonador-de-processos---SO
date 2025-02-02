@@ -25,46 +25,55 @@ export function sjf(processes: Process[]): Process[] {
   let time = 0;
   let remainingProcesses = [...processes].sort((a, b) => a.arrivalTime - b.arrivalTime);
   let result: Process[] = [];
+  let queue: Process[] = [];
 
-  while (remainingProcesses.length > 0) {
-    // Filtrar processos disponíveis no tempo atual
-    let availableProcesses = remainingProcesses.filter((p) => p.arrivalTime <= time);
-
-    // Se não há processos disponíveis, avançamos o tempo até o próximo chegar
-    if (availableProcesses.length === 0) {
-      time = remainingProcesses[0].arrivalTime;
-      availableProcesses = [remainingProcesses[0]];
+  while (remainingProcesses.length > 0 || queue.length > 0) {
+    // 🔹 Adiciona processos que chegaram à fila de prontos antes de escolher o próximo
+    while (remainingProcesses.length > 0 && remainingProcesses[0].arrivalTime <= time) {
+      queue.push(remainingProcesses.shift()!);
     }
 
-    // Escolher o processo com menor tempo de execução
-    let shortestJob = availableProcesses.reduce((prev, curr) => 
-      prev.executationTime < curr.executationTime ? prev : curr
-    );
+    // 🔹 Se a fila está vazia, avança o tempo até o próximo processo chegar
+    if (queue.length === 0) {
+      time = remainingProcesses[0].arrivalTime;
+      continue;
+    }
 
-    // Executar o processo pelo tempo correto
+    // 🔹 Ordena a fila por tempo de execução (menor primeiro)
+    queue.sort((a, b) => a.executationTime - b.executationTime);
+
+    // 🔹 Seleciona o processo com menor tempo de execução
+    let shortestJob = queue.shift()!;
+
+    // 🔹 Avança o tempo conforme o tempo de execução do processo
     time += shortestJob.executationTime;
-    
     result.push({ ...shortestJob, completionTime: time });
 
-    // Remover processo concluído
-    remainingProcesses = remainingProcesses.filter((p) => p.id !== shortestJob.id);
+    // 🔹 Reavaliar se novos processos chegaram enquanto o processo estava executando
+    while (remainingProcesses.length > 0 && remainingProcesses[0].arrivalTime <= time) {
+      queue.push(remainingProcesses.shift()!);
+    }
+
+    // 🔹 Ordena novamente após a chegada de novos processos
+    queue.sort((a, b) => a.executationTime - b.executationTime);
   }
 
   return result;
 }
 
+
 /**
  * Round Robin - Considera um quantum fixo
  */
 export function roundRobin(processes: Process[], quantum: number, overhead: number): Process[] {
-  let queue = [...processes.map(p => ({ ...p, remainingTime: p.executationTime }))];
-  let result: Process[] = [];
-  let time = 0;
+  let queue = [...processes.map(p => ({ ...p, remainingTime: p.executationTime }))]; // copia dos processos
+  let result: Process[] = []; // proc finalizados
+  let time = 0; //tempo global
 
   while (queue.length > 0) {
     let process = queue.shift()!; // Pega o primeiro processo da fila
 
-    let executionTime = Math.min(quantum, process.remainingTime); // Respeita o quantum
+    let executionTime = Math.min(quantum, process.remainingTime); // remainingTime -> tempo restante do processo
     process.remainingTime -= executionTime;
     time += executionTime;
 
