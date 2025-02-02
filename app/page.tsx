@@ -1,16 +1,28 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState } from "react";
 import ProcessForm from "./components/ProcessForm";
 import MemoryView from "./components/MemoryView";
 import GanttChart from "./components/GanttChart";
-import ExecutionLog from "./components/ExecutionLogs";
+// import ExecutionLog from "./components/ExecutionLogs";
 import { useScheduler } from "./hooks/useScheduler";
-import SelectInputs from "./components/SelectInputs";
+// import SelectInputs from "./components/SelectInputs";
 
 export default function Home() {
 
-  const { processes, setProcesses, algorithm, setAlgorithm, quantum, setQuantum, runScheduler } = useScheduler();
-  const [overhead, setOverhead] = useState(1);
+  const {
+    processes,
+    saveProcesses, // Alterado para armazenar os processos sem executar
+    algorithm,
+    setAlgorithm,
+    quantum,
+    setQuantum,
+    overhead,
+    setOverhead,
+    runScheduler,
+    isRunning, // Estado que controla se os processos estão prontos
+  } = useScheduler();
+  // const [overhead, setOverhead] = useState(1);
 
 
   return (
@@ -18,7 +30,7 @@ export default function Home() {
       <h1 className="text-3xl font-bold text-center mb-6">Simulador de Escalonamento</h1>
 
       {/* Formulário de Entrada */}
-      <ProcessForm setProcesses={setProcesses} />
+      <ProcessForm setProcesses={saveProcesses} /> {/* Alterado para salvar antes de rodar */}
 
       {/* Configuração de Algoritmo */}
       <div className="my-4">
@@ -62,14 +74,25 @@ export default function Home() {
 
         )}
 
-        <button onClick={runScheduler} className="ml-4 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white px-4 py-2 rounded">Executar</button>
+        {/* Botão de execução só funciona se os processos foram adicionados */}
+        <button
+          onClick={runScheduler}
+          className={`ml-4 px-4 py-2 rounded ${processes.length === 0 ? "bg-gray-500 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white"}`}
+          disabled={processes.length === 0}
+        >
+          Executar
+        </button>
       </div>
+      
 
-      {/* Exibição da Memória */}
-      <MemoryView processes={processes} />
+      {/* Exibição da Memória
+      <MemoryView processes={processes} /> */}
+
 
       {/* Gráfico de Gantt */}
+      {isRunning && (
       <GanttChart processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} />
+     )}
 
 
       {/* Log de Execução */}

@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Process } from "../lib/types";
-import { useScheduler } from "../hooks/useScheduler";
+// import { useScheduler } from "../hooks/useScheduler";
 
 interface Props {
-  setProcesses: (callback: (prev: Process[]) => Process[]) => void;
-  
+  setProcesses: (newProcesses: Process[]) => void; // Modificado para aceitar um array diretamente
 }
 
+
 export default function ProcessForm({ setProcesses }: Props) {
-  const { algorithm, setAlgorithm, quantum, setQuantum } = useScheduler()
+  // const { algorithm, setAlgorithm, quantum, setQuantum } = useScheduler()
   const [processesList, setProcessesList] = useState<Process[]>([]);
-  const [readyToExecute, setReadyToExecute] = useState(false);
+  // const [readyToExecute, setReadyToExecute] = useState(false);
   const [draftProcess, setDraftProcess] = useState<Process>({
     id: 0, // ID temporário (não usado na lista final
     arrivalTime: 0,
@@ -58,8 +58,10 @@ export default function ProcessForm({ setProcesses }: Props) {
   };
 
   const submitProcesses = () => {
-    setProcesses(() => processesList);
+    setProcesses(processesList); // Apenas salva os processos sem rodar imediatamente
   };
+  
+  
 
   return (
     <div className="p-4 flex flex-col gap-5 space-x-4 border rounded bg-gray-800 text-white">
