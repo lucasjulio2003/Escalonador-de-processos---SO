@@ -1,12 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prefer-const */
-// lib/utils.ts
-
-import { Process, Page } from "./types";
+import { Page, Process } from "./types";
 
 /**
  * A universal, time-stepped simulation that handles FIFO, SJF, RR, EDF 
  * in a way that the Gantt chart can show waiting times (and overhead) correctly.
+ *
+ * For RR/EDF, when a process’s quantum expires:
+ * - We trigger overhead and *do not* immediately re-queue that process.
+ * - We mark the process as "pending requeue" only after the overhead time is paid.
+ * - In the next iteration (after adding new arrivals for that time unit),
+ *   the pending process is added to the ready queue—thus new arrivals are ahead.
  */
 export function simulateQueue(
   processes: Process[],
@@ -14,7 +17,7 @@ export function simulateQueue(
   quantum: number,
   overhead: number
 ) {
-  // Copy the processes
+  // Make a local copy of processes
   const procs = processes.map((p) => ({
     ...p,
     remainingTime: p.executationTime,
@@ -23,68 +26,93 @@ export function simulateQueue(
 
   let currentTime = 0;
   let activeProcess: Process | null = null;
-  let overheadTimeLeft = 0;
-  let sliceTimeLeft = 0;
-  // Remember who triggered overhead for Gantt
-  let lastOverheadTriggerId: number | null = null;
 
+  // Overhead tracking variables
+  let overheadTimeLeft = 0;
+  let lastOverheadTriggerId: number | null = null;
+  
+  // For RR/EDF, track how many time units remain in the current quantum slice
+  let sliceTimeLeft = 0;
+  
+  // When a process's quantum expires, we store it here until overhead finishes.
+  let switchingOutProcess: Process | null = null;
+  // After overhead finishes, we store the process here, then add it to readyQueue.
+  let pendingRequeue: Process | null = null;
+
+  // The queue of ready processes
   const readyQueue: Process[] = [];
+
+  // For the Gantt chart history: each step shows which processes are ready and if overhead is active.
   const history: { processes: Process[]; overheadProcess: number | null }[] = [];
 
-  // Helper to check if all processes are complete
+  // Helper: Are all processes complete?
   const allDone = () => procs.every((p) => p.remainingTime <= 0);
 
   while (!allDone() || activeProcess !== null) {
-    // 1) Add newly arrived processes to the ready queue
+    // 1) Add newly arrived processes for the current time
     procs.forEach((p) => {
       if (p.arrivalTime === currentTime) {
         readyQueue.push(p);
       }
     });
-
-    // 2) If CPU is free & no overhead, pick next
-    if (!activeProcess && overheadTimeLeft === 0 && readyQueue.length > 0) {
-      if (algorithm === "SJF") {
-        // Sort by executationTime
-        readyQueue.sort((a, b) => a.executationTime - b.executationTime);
-      } else if (algorithm === "EDF") {
-        // 🔴 DYNAMIC EDF SORT:
-        // The "time left to deadline" = (arrivalTime + deadline) - currentTime
-        readyQueue.sort((a, b) => {
-          const aTimeLeft = (a.deadline ?? Infinity) + a.arrivalTime - currentTime;
-          const bTimeLeft = (b.deadline ?? Infinity) + b.arrivalTime - currentTime;
-          return aTimeLeft - bTimeLeft;
-        });
-      }
-      // FIFO or RR would just pick front-of-queue with no special sorting
-
-      activeProcess = readyQueue.shift()!;
-      if (algorithm === "RR" || algorithm === "EDF") {
-        sliceTimeLeft = Math.min(activeProcess.remainingTime, quantum);
-      }
-      // Clear overhead trigger ID
-      lastOverheadTriggerId = null;
+    
+    // 1.5) After adding new arrivals, if there's a pending process from overhead,
+    // add it now—this ensures any new arrivals at this time are ahead.
+    if (pendingRequeue) {
+      readyQueue.push(pendingRequeue);
+      pendingRequeue = null;
     }
 
-    // 3) Overhead time
+    // 2) If overhead is active, process it
     if (overheadTimeLeft > 0) {
-      // During overhead, CPU is idle, color the Gantt red for the process that triggered the switch
       history.push({
-        processes: [...readyQueue], // all waiting, no running process
+        processes: [...readyQueue],
         overheadProcess: lastOverheadTriggerId,
       });
-
       overheadTimeLeft--;
       currentTime++;
+
+      // When overhead just finishes, mark the process as pending requeue.
+      if (overheadTimeLeft === 0 && switchingOutProcess) {
+        pendingRequeue = switchingOutProcess;
+        switchingOutProcess = null;
+      }
       continue;
     }
 
-    // 4) Execute if we have a process
+    // 3) If no active process, pick one from the ready queue (if available)
+    if (!activeProcess) {
+      if (readyQueue.length > 0) {
+        if (algorithm === "SJF") {
+          readyQueue.sort((a, b) => a.executationTime - b.executationTime);
+        } else if (algorithm === "EDF") {
+          // Dynamic EDF: sort based on effective time left until deadline:
+          readyQueue.sort((a, b) => {
+            const aTimeLeft = (a.deadline ?? Infinity) + a.arrivalTime - currentTime;
+            const bTimeLeft = (b.deadline ?? Infinity) + b.arrivalTime - currentTime;
+            return aTimeLeft - bTimeLeft;
+          });
+        }
+        // FIFO or RR: simply pick the front of the queue.
+        activeProcess = readyQueue.shift()!;
+        if (algorithm === "RR" || algorithm === "EDF") {
+          sliceTimeLeft = Math.min(activeProcess.remainingTime, quantum);
+        }
+        lastOverheadTriggerId = null; // Clear previous overhead ID
+      } else {
+        // No process is ready: CPU idle
+        history.push({ processes: [], overheadProcess: null });
+        currentTime++;
+        continue;
+      }
+    }
+
+    // 4) Execute the active process for one time unit
     if (activeProcess) {
       activeProcess.remainingTime--;
       activeProcess.executedTime++;
 
-      // Gantt step for normal CPU usage
+      // Record normal execution in the Gantt history
       history.push({
         processes: [activeProcess, ...readyQueue],
         overheadProcess: null,
@@ -92,30 +120,23 @@ export function simulateQueue(
 
       currentTime++;
 
-      // 4a) If finished
+      // 4a) If the active process finishes, mark its completion and free the CPU
       if (activeProcess.remainingTime <= 0) {
         activeProcess.completionTime = currentTime;
-        activeProcess = null; // CPU is free
+        activeProcess = null;
       }
-      // 4b) Not finished, check quantum for RR/EDF
+      // 4b) If it's not finished and we're using RR/EDF, check the quantum
       else if (algorithm === "RR" || algorithm === "EDF") {
         sliceTimeLeft--;
         if (sliceTimeLeft === 0) {
-          // We incur overhead
+          // Quantum expires: trigger overhead
           overheadTimeLeft = overhead;
           lastOverheadTriggerId = activeProcess.id;
-
-          // Re-queue if it still has time
-          if (activeProcess.remainingTime > 0) {
-            readyQueue.push(activeProcess);
-          }
+          // Do not re-queue immediately: hold the process until overhead completes.
+          switchingOutProcess = activeProcess;
           activeProcess = null;
         }
       }
-    } else {
-      // 5) Idle if no active process and no overhead
-      history.push({ processes: [], overheadProcess: null });
-      currentTime++;
     }
   }
 

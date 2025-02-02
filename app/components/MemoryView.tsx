@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useMemory } from "../hooks/useMemory";
 import { Process } from "../lib/types";
 import { simulateQueue } from "../lib/utils";
@@ -11,7 +11,7 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
   const history = simulateQueue(processes, algorithm, quantum, overhead);
   const [displayIndex, setDisplayIndex] = useState(0);
 
-  const loadPages = (process: Process) => {
+  const loadPages = useCallback((process: Process) => {
     if (!isRunning) {
       setDisplayIndex(0);
       return;
@@ -19,8 +19,8 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
     for (let i = 0; i < process?.numPages; i++) {
       loadPage({ id: i, processId: process.id, inMemory: false });
     }
-  }
-  
+  }, [isRunning, loadPage]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setDisplayIndex((prev) => (prev < history.length - 1 ? prev + 1 : prev));
@@ -30,7 +30,7 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
     loadPages(currentProcess);
     console.log(displayIndex);
     return () => clearInterval(interval);
-  }, [history]);
+  }, [displayIndex, loadPages, history]);
 
   return (
     <div className="p-4 border rounded bg-gray-700 text-black my-4">
