@@ -2,12 +2,12 @@
 /* eslint-disable prefer-const */
 // lib/utils.ts
 
+import { Process, Page } from "./types";
+
 /**
  * A universal, time-stepped simulation that handles FIFO, SJF, RR, EDF 
- * in a way that the Gantt chart can show waiting times correctly.
+ * in a way that the Gantt chart can show waiting times (and overhead) correctly.
  */
-import { Process } from "./types";
-
 export function simulateQueue(
   processes: Process[],
   algorithm: string,
@@ -25,17 +25,17 @@ export function simulateQueue(
   let activeProcess: Process | null = null;
   let overheadTimeLeft = 0;
   let sliceTimeLeft = 0;
-  // A new variable to remember who triggered overhead
+  // Remember who triggered overhead for Gantt
   let lastOverheadTriggerId: number | null = null;
 
   const readyQueue: Process[] = [];
   const history: { processes: Process[]; overheadProcess: number | null }[] = [];
 
-  // Helper to check if we’re done
+  // Helper to check if all processes are complete
   const allDone = () => procs.every((p) => p.remainingTime <= 0);
 
   while (!allDone() || activeProcess !== null) {
-    // 1) Add newly arrived processes
+    // 1) Add newly arrived processes to the ready queue
     procs.forEach((p) => {
       if (p.arrivalTime === currentTime) {
         readyQueue.push(p);
@@ -45,36 +45,39 @@ export function simulateQueue(
     // 2) If CPU is free & no overhead, pick next
     if (!activeProcess && overheadTimeLeft === 0 && readyQueue.length > 0) {
       if (algorithm === "SJF") {
+        // Sort by executationTime
         readyQueue.sort((a, b) => a.executationTime - b.executationTime);
       } else if (algorithm === "EDF") {
-        readyQueue.sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity));
+        // 🔴 DYNAMIC EDF SORT:
+        // The "time left to deadline" = (arrivalTime + deadline) - currentTime
+        readyQueue.sort((a, b) => {
+          const aTimeLeft = (a.deadline ?? Infinity) + a.arrivalTime - currentTime;
+          const bTimeLeft = (b.deadline ?? Infinity) + b.arrivalTime - currentTime;
+          return aTimeLeft - bTimeLeft;
+        });
       }
-      // FIFO/RR default is just the front
+      // FIFO or RR would just pick front-of-queue with no special sorting
 
       activeProcess = readyQueue.shift()!;
       if (algorithm === "RR" || algorithm === "EDF") {
         sliceTimeLeft = Math.min(activeProcess.remainingTime, quantum);
       }
-      // Clear last overhead ID if we’re switching to a new process
+      // Clear overhead trigger ID
       lastOverheadTriggerId = null;
     }
 
     // 3) Overhead time
     if (overheadTimeLeft > 0) {
-      // During overhead, the CPU is effectively idle.
-      // No active process runs. The overhead is attributed
-      // to the last process that triggered the switch.
+      // During overhead, CPU is idle, color the Gantt red for the process that triggered the switch
       history.push({
-        processes: [...readyQueue],        // all are waiting
-        overheadProcess: lastOverheadTriggerId // used by Gantt to color overhead in red
+        processes: [...readyQueue], // all waiting, no running process
+        overheadProcess: lastOverheadTriggerId,
       });
-    
+
       overheadTimeLeft--;
       currentTime++;
       continue;
     }
-    
-    
 
     // 4) Execute if we have a process
     if (activeProcess) {
@@ -93,12 +96,12 @@ export function simulateQueue(
       if (activeProcess.remainingTime <= 0) {
         activeProcess.completionTime = currentTime;
         activeProcess = null; // CPU is free
-      } 
+      }
       // 4b) Not finished, check quantum for RR/EDF
       else if (algorithm === "RR" || algorithm === "EDF") {
         sliceTimeLeft--;
         if (sliceTimeLeft === 0) {
-          // We will incur overhead
+          // We incur overhead
           overheadTimeLeft = overhead;
           lastOverheadTriggerId = activeProcess.id;
 
@@ -110,7 +113,7 @@ export function simulateQueue(
         }
       }
     } else {
-      // 5) Idle
+      // 5) Idle if no active process and no overhead
       history.push({ processes: [], overheadProcess: null });
       currentTime++;
     }
@@ -118,7 +121,6 @@ export function simulateQueue(
 
   return history;
 }
-
 
 /**
  * FIFO - Escalonamento First In, First Out
@@ -145,12 +147,12 @@ export function sjf(processes: Process[]): Process[] {
   let queue: Process[] = [];
 
   while (remainingProcesses.length > 0 || queue.length > 0) {
-    // 🔹 Adiciona processos que chegaram à fila de prontos antes de escolher o próximo
+    // 🔹 Adiciona processos que chegaram à fila de prontos
     while (remainingProcesses.length > 0 && remainingProcesses[0].arrivalTime <= time) {
       queue.push(remainingProcesses.shift()!);
     }
 
-    // 🔹 Se a fila está vazia, avança o tempo até o próximo processo chegar
+    // 🔹 Se a fila está vazia, avança tempo até o próximo processo chegar
     if (queue.length === 0) {
       time = remainingProcesses[0].arrivalTime;
       continue;
@@ -159,78 +161,40 @@ export function sjf(processes: Process[]): Process[] {
     // 🔹 Ordena a fila por tempo de execução (menor primeiro)
     queue.sort((a, b) => a.executationTime - b.executationTime);
 
-    // 🔹 Seleciona o processo com menor tempo de execução
+    // 🔹 Seleciona o processo com menor tempo
     let shortestJob = queue.shift()!;
-
-    // 🔹 Avança o tempo conforme o tempo de execução do processo
     time += shortestJob.executationTime;
     result.push({ ...shortestJob, completionTime: time });
 
-    // 🔹 Reavaliar se novos processos chegaram enquanto o processo estava executando
+    // 🔹 Reavaliar se novos processos chegaram nesse intervalo
     while (remainingProcesses.length > 0 && remainingProcesses[0].arrivalTime <= time) {
       queue.push(remainingProcesses.shift()!);
     }
-
-    // 🔹 Ordena novamente após a chegada de novos processos
-    queue.sort((a, b) => a.executationTime - b.executationTime);
   }
 
   return result;
 }
-
 
 /**
  * Round Robin - Considera um quantum fixo
  */
 export function roundRobin(processes: Process[], quantum: number, overhead: number): Process[] {
   let queue = [...processes.map(p => ({ ...p, remainingTime: p.executationTime }))]; // copia dos processos
-  let result: Process[] = []; // proc finalizados
-  let time = 0; //tempo global
-
-  while (queue.length > 0) {
-    let process = queue.shift()!; // Pega o primeiro processo da fila
-
-    let executionTime = Math.min(quantum, process.remainingTime); // remainingTime -> tempo restante do processo
-    process.remainingTime -= executionTime;
-    time += executionTime;
-
-    // Se o processo ainda não terminou, adicionamos a sobrecarga
-    if (process.remainingTime > 0) {
-      time += overhead; // Adiciona tempo de sobrecarga
-      queue.push(process); // Processo volta para o final da fila
-    } else {
-      result.push({ ...process, completionTime: time }); // Armazena o tempo de término
-    }
-  }
-
-  return result;
-}
-
-
-/**
- * EDF - Earliest Deadline First (Não preemptivo)
- * Ordena os processos pelo menor deadline
- */
-
-export function edf(processes: Process[], quantum: number, overhead: number): Process[] {
-  let queue = [...processes.map(p => ({ ...p, remainingTime: p.executationTime }))];
   let result: Process[] = [];
   let time = 0;
 
   while (queue.length > 0) {
-    // Ordena os processos pelo menor deadline
-    queue.sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity));
-
-    let process = queue.shift()!; // Remove o primeiro processo (com menor deadline)
+    let process = queue.shift()!; 
     let executionTime = Math.min(quantum, process.remainingTime);
-
     process.remainingTime -= executionTime;
     time += executionTime;
 
+    // Se não terminou, adiciona overhead + re-insere no final da fila
     if (process.remainingTime > 0) {
-      time += overhead; // Aplica a sobrecarga antes de voltar para a fila
-      queue.push(process); // Processo volta para a fila
+      time += overhead;
+      queue.push(process);
     } else {
+      // Terminou
       result.push({ ...process, completionTime: time });
     }
   }
@@ -238,28 +202,50 @@ export function edf(processes: Process[], quantum: number, overhead: number): Pr
   return result;
 }
 
-
-import { Page } from "./types";
-
 /**
- * Algoritmo FIFO (First-In, First-Out)
- * Remove a página mais antiga quando a RAM está cheia.
+ * EDF - Earliest Deadline First (não-preemptivo, demonstrativo)
+ * Ordena os processos pelo menor deadline (estático).
+ * 
+ * NOTE: For a truly time-stepped, dynamic EDF approach,
+ * use the 'simulateQueue' with `algorithm="EDF"`.
  */
-export function fifoReplacement(memory: Page[], newPage: Page): Page[] {
-  return [...memory.slice(1), newPage]; // Remove a primeira página e adiciona a nova
+export function edf(processes: Process[], quantum: number, overhead: number): Process[] {
+  let queue = [...processes.map(p => ({ ...p, remainingTime: p.executationTime }))];
+  let result: Process[] = [];
+  let time = 0;
+
+  while (queue.length > 0) {
+    // Ordena por deadline estático (no real scenario you'd do dynamic)
+    queue.sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity));
+
+    let process = queue.shift()!;
+    let executionTime = Math.min(quantum, process.remainingTime);
+    process.remainingTime -= executionTime;
+    time += executionTime;
+
+    if (process.remainingTime > 0) {
+      time += overhead;
+      queue.push(process);
+    } else {
+      result.push({ ...process, completionTime: time });
+    }
+  }
+  return result;
 }
 
-/**
- * Algoritmo LRU (Least Recently Used)
- * Remove a página menos recentemente usada.
+/** 
+ * Page replacement examples...
+ * (unchanged from your code)
  */
+export function fifoReplacement(memory: Page[], newPage: Page): Page[] {
+  return [...memory.slice(1), newPage];
+}
 export function lruReplacement(memory: Page[], newPage: Page): Page[] {
-  return [...memory.slice(1), newPage]; // Simplesmente substituímos a primeira página (LRU básico)
+  return [...memory.slice(1), newPage];
 }
 
 /**
  * Verifica se todas as páginas de um processo estão na RAM antes da execução.
- * Retorna `true` se o processo pode ser executado, `false` caso contrário.
  */
 export function canExecuteProcess(process: Process, memory: Page[]): boolean {
   const processPages = memory.filter((page) => page.processId === process.id);
@@ -268,7 +254,6 @@ export function canExecuteProcess(process: Process, memory: Page[]): boolean {
 
 /**
  * Simula a execução dos processos com delay e controle de memória RAM.
- * Retorna a sequência de execução dos processos.
  */
 export async function executeProcessesWithDelay(
   processes: Process[],
@@ -289,7 +274,7 @@ export async function executeProcessesWithDelay(
       continue;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, delay)); // Delay na execução.
+    await new Promise((resolve) => setTimeout(resolve, delay));
 
     if (process.executationTime > quantum) {
       time += quantum;
@@ -306,9 +291,11 @@ export async function executeProcessesWithDelay(
 
 /**
  * Calcula o turnaround médio dos processos.
- * Turnaround = tempo de espera + tempo de execução.
  */
 export function calculateTurnaround(processes: Process[]): number {
-  let turnaroundSum = processes.reduce((sum, p) => sum + (p.completionTime! - p.arrivalTime), 0);
+  let turnaroundSum = processes.reduce(
+    (sum, p) => sum + (p.completionTime! - p.arrivalTime),
+    0
+  );
   return processes.length > 0 ? turnaroundSum / processes.length : 0;
 }
