@@ -84,8 +84,6 @@ export default function Home() {
         </button>
       </div>
       
-      {/* Gráfico de Gantt */}
-      <GanttChart processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} />
 
       {/* Exibição da Memória
       <MemoryView processes={processes} /> */}
