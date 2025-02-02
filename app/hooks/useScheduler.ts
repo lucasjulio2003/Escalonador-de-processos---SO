@@ -8,8 +8,8 @@ import { fifo, sjf, edf, roundRobin, calculateTurnaround } from "../lib/utils";
 export function useScheduler() {
   const [processes, setProcesses] = useState<Process[]>([]);
   const [algorithm, setAlgorithm] = useState<"FIFO" | "SJF" | "RR" | "EDF">("FIFO");
-  const [quantum, setQuantum] = useState<number>(0);
-  const [overhead, setOverhead] = useState<number>(0); // ADICIONADO
+  const [quantum, setQuantum] = useState<number>(1);
+  const [overhead, setOverhead] = useState<number>(1); // ADICIONADO
   const [turnaroundAvg, setTurnaroundAvg] = useState<number>(0);
   const [isExecuting, setIsExecuting] = useState<boolean>(false);
   const [isRunning, setIsRunning] = useState<boolean>(false);

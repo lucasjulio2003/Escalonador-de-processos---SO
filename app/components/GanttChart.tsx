@@ -1,87 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Process } from "../lib/types";
-import { fifo, sjf, edf, roundRobin } from "../lib/utils";
+import { simulateQueue } from "../lib/utils";
 
-function simulateQueue(processes: Process[], algorithm: string, quantum: number, overhead: number) {
-  let scheduledProcesses: Process[] = []; // Lista de processos escalonados
-
-  // Escolhe o algoritmo de escalonamento
-  switch (algorithm) {
-    case "FIFO":
-      scheduledProcesses = fifo(processes);
-      break;
-    case "SJF":
-      scheduledProcesses = sjf(processes);
-      break;
-    case "EDF":
-      scheduledProcesses = edf(processes, quantum, overhead);
-      break;
-    case "RR":
-      scheduledProcesses = roundRobin(processes, quantum, overhead);
-      break;
-  }
-
-  let currentTime = 0; // Controla o tempo atual da simulação
-  const history: { processes: Process[], overheadProcess: number | null }[] = []; // Histórico de execução dos processos
-  const queue: Process[] = []; // Fila de processos prontos para execução
-  let overheadProcess: number | null = null; // Identifica se um processo sofreu sobrecarga
-
-  while (scheduledProcesses.some((p) => p.executationTime > 0) || queue.length > 0) {
-    scheduledProcesses.forEach((p) => {
-      if (p.arrivalTime <= currentTime && p.executationTime > 0 && !queue.includes(p)) {
-        queue.push(p);
-        p.executedTime = 0;
-      }
-    });
-
-    if (queue.length > 0) {
-      if ((algorithm === "RR" || algorithm === "EDF") && overheadProcess !== null) {
-        for (let i = 0; i < overhead; i++) {
-          history.push({ processes: [...queue], overheadProcess });
-          currentTime++;
-        }
-        overheadProcess = null;
-      } else {
-        let process = queue[0];
-        process.executationTime--;
-        process.executedTime++;
-        history.push({ processes: [...queue], overheadProcess: null });
-
-        if (process.executationTime === 0) {
-          queue.shift();
-        }
-
-        if (algorithm === "RR" || algorithm === "EDF") {
-          if (process.executedTime === quantum) {
-            if (queue.length > 1) {
-              console.log("entrou");
-
-              overheadProcess = process.id;
-              queue.push(queue.shift()!);
-              currentTime += overhead;
-            }
-          }
-        }
-      }
-    } else {
-      history.push({ processes: [], overheadProcess: null });
-    }
-
-    scheduledProcesses = scheduledProcesses.filter(p => p.executationTime > 0);
-
-    if (queue.length === 0 && scheduledProcesses.every(p => p.executationTime <= 0)) {
-      // console.log("🚨 Nenhum processo restante. Encerrando a simulação.");
-      break;
-    }
-
-    currentTime++;
-  }
-
-  return history;
-}
-
-
-export default function GanttChart({ processes, algorithm, quantum, overhead }: { processes: Process[], algorithm: string, quantum: number, overhead: number }) {
+export default function GanttChart({ processes, algorithm, quantum, overhead, isRunning }: { processes: Process[], algorithm: string, quantum: number, overhead: number, isRunning: boolean }) {
   const [history, setHistory] = useState<{ processes: Process[], overheadProcess: number | null }[]>([]);
   const [displayIndex, setDisplayIndex] = useState(0);
 
@@ -125,8 +46,10 @@ export default function GanttChart({ processes, algorithm, quantum, overhead }: 
       </div>
 
       {/* Exibição do gráfico */}
+      {isRunning && (
       <div className="flex space-x-2">
         <div className="flex flex-col space-y-2">
+          <div className="bg-gray-500 text-white p-1 text-[8px] h-4 flex justify-center items-center">x</div>
           {processes.map((p) => (
             <div key={p.id} className="bg-blue-500 text-white p-1 text-[8px] h-4 flex justify-center items-center">
               P{p.id}
@@ -136,6 +59,7 @@ export default function GanttChart({ processes, algorithm, quantum, overhead }: 
 
         {history.slice(0, displayIndex + 1).map((step, i) => (
           <div key={i} className="flex flex-col space-y-2">
+            <div className="bg-blue-500 text-white p-1 text-[8px] h-4 flex justify-center items-center">{i}</div>
             {processes.map((p) => {
               let color = "bg-gray-500";
 
@@ -152,7 +76,7 @@ export default function GanttChart({ processes, algorithm, quantum, overhead }: 
             })}
           </div>
         ))}
-      </div>
+      </div>)}
     </div>
   );
 }
