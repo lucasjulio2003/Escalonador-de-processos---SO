@@ -40,21 +40,6 @@ function simulateQueue(processes: Process[], algorithm: string, quantum: number,
           history.push({ processes: [...queue], overheadProcess });
           currentTime++;
         }
-
-        // 🔴 Exibe detalhes do processo que sofreu sobrecarga
-        // let processOverhead = scheduledProcesses.find(p => p.id === overheadProcess);
-        // if (processOverhead) {
-        //   console.log(`⚠️ Tempo ${currentTime}: P${processOverhead.id} sofreu sobrecarga`, {
-        //     id: processOverhead.id,
-        //     arrivalTime: processOverhead.arrivalTime,
-        //     executationTime: processOverhead.executationTime,
-        //     remainingTime: processOverhead.remainingTime ?? processOverhead.executationTime,
-        //     deadline: processOverhead.deadline,
-        //     numPages: processOverhead.numPages,
-        //     systemOverhead: processOverhead.systemOverhead
-        //   });
-        // }
-
         overheadProcess = null;
       } else {
         let process = queue[0];
@@ -94,6 +79,7 @@ function simulateQueue(processes: Process[], algorithm: string, quantum: number,
 
   return history;
 }
+
 
 export default function GanttChart({ processes, algorithm, quantum, overhead }: { processes: Process[], algorithm: string, quantum: number, overhead: number }) {
   const [history, setHistory] = useState<{ processes: Process[], overheadProcess: number | null }[]>([]);
