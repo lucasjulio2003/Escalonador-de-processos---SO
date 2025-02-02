@@ -4,9 +4,6 @@ import { fifo, sjf, edf, roundRobin } from "../lib/utils";
 
 function simulateQueue(processes: Process[], algorithm: string, quantum: number, overhead: number) {
   let scheduledProcesses: Process[] = [];
-
-
-  // Escolhe o algoritmo correto para a simulação
   switch (algorithm) {
     case "FIFO":
       scheduledProcesses = fifo(processes);
@@ -23,11 +20,11 @@ function simulateQueue(processes: Process[], algorithm: string, quantum: number,
   }
 
   let currentTime = 0;
-  const history: Process[][] = [];
+  const history: { processes: Process[], overheadProcess: number | null }[] = [];
   const queue: Process[] = [];
+  let overheadProcess: number | null = null; // Guarda qual processo sofreu sobrecarga
 
   while (scheduledProcesses.some((p) => p.executationTime > 0)) {
-    // Adiciona processos que chegaram ao sistema e ainda não foram executados
     scheduledProcesses.forEach((p) => {
       if (p.arrivalTime <= currentTime && p.executationTime > 0 && !queue.includes(p)) {
         queue.push(p);
@@ -35,43 +32,42 @@ function simulateQueue(processes: Process[], algorithm: string, quantum: number,
     });
 
     if (queue.length > 0) {
-      queue[0].executationTime--; // Executa o primeiro processo
+      // Aplica sobrecarga apenas para RR e EDF
+      if ((algorithm === "RR" || algorithm === "EDF") && overheadProcess !== null) {
+        history.push({ processes: [...queue], overheadProcess }); // Marca sobrecarga no processo específico
+        currentTime += overhead;
+        overheadProcess = null;
+      } else {
+        queue[0].executationTime--;
+        history.push({ processes: [...queue], overheadProcess: null });
+
+        if (queue.length > 0 && queue[0].executationTime === 0) {
+          if (algorithm === "RR" || algorithm === "EDF") {
+            overheadProcess = queue[0].id; // Apenas EDF e RR sofrem sobrecarga
+          }
+          queue.shift();
+        }
+      }
+    } else {
+      history.push({ processes: [], overheadProcess: null });
     }
 
-    history.push(queue.map((p) => ({ ...p }))); // Salva o estado atual da fila
-
-    if (queue.length > 0 && queue[0].executationTime === 0) {
-      queue.shift(); // Remove o processo finalizado da fila
-    }
     currentTime++;
   }
 
   return history;
 }
 
+
+
 export default function GanttChart({ processes, algorithm, quantum, overhead }: { processes: Process[], algorithm: string, quantum: number, overhead: number }) {
-  const limitTime = 10;
-
-  // Fazemos a simulação apenas 1 vez, por exemplo, no "mount"
-  const processesCopy = processes.map((p) => ({ ...p }));
-  const history = simulateQueue(processesCopy, algorithm, quantum, overhead);
-
-  // Estado que vai dizer até qual coluna do histórico vamos exibir
+  const history = simulateQueue(processes, algorithm, quantum, overhead);
   const [displayIndex, setDisplayIndex] = useState(0);
 
-  // A cada X ms, incrementa o displayIndex para exibir a próxima coluna
   useEffect(() => {
     const interval = setInterval(() => {
-      setDisplayIndex((prev) => {
-        if (prev < history.length - 1) {
-          return prev + 1;
-        } else {
-          clearInterval(interval);
-          return prev;
-        }
-      });
-    }, 1000); // 1000 ms = 1 segundo
-
+      setDisplayIndex((prev) => (prev < history.length - 1 ? prev + 1 : prev));
+    }, 1000);
     return () => clearInterval(interval);
   }, [history]);
 
@@ -79,7 +75,23 @@ export default function GanttChart({ processes, algorithm, quantum, overhead }: 
     <div className="p-4 border rounded bg-gray-700 text-white my-4">
       <h2 className="text-xl">Gráfico de Gantt</h2>
 
-      {/* Você pode mostrar os processos na primeira coluna (legenda) */}
+      {/* Legenda */}
+      <div className="flex space-x-4 my-2">
+        <div className="flex items-center space-x-2">
+          <div className="w-4 h-4 bg-green-500"></div>
+          <span>Executando</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <div className="w-4 h-4 bg-yellow-500"></div>
+          <span>Esperando</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <div className="w-4 h-4 bg-red-500"></div>
+          <span>Sobrecarga</span>
+        </div>
+      </div>
+
+      {/* Exibição do gráfico */}
       <div className="flex space-x-2">
         <div className="flex flex-col space-y-2">
           {processes.map((p) => (
@@ -89,22 +101,22 @@ export default function GanttChart({ processes, algorithm, quantum, overhead }: 
           ))}
         </div>
 
-        {/* Aqui exibimos só até displayIndex */}
-        {history.slice(0, displayIndex + 1).map((queue, i) => (
+        {history.slice(0, displayIndex + 1).map((step, i) => (
           <div key={i} className="flex flex-col space-y-2">
             {processes.map((p) => {
-              let color = "bg-gray-500"; // Cinza por padrão (não está na fila)
+              let color = "bg-gray-500"; // Padrão: Processo não está na fila
 
-              if (queue.find((q) => q.id === p.id)) {
-                color = "bg-yellow-500"; // Processo está na fila esperando
+              // Apenas EDF e RR sofrem sobrecarga
+              if ((algorithm === "RR" || algorithm === "EDF") && step.overheadProcess === p.id) {
+                color = "bg-red-500"; // Apenas o processo específico sofre sobrecarga
+              } else if (step.processes.find((q) => q.id === p.id)) {
+                color = "bg-yellow-500"; // Processo esperando na fila
               }
-              if (queue.length > 0 && queue[0].id === p.id) {
-                color = "bg-green-500"; // Processo está rodando
+              if (!step.overheadProcess && step.processes.length > 0 && step.processes[0].id === p.id) {
+                color = "bg-green-500"; // Processo executando
               }
 
-              return (
-                <div key={p.id} className={`${color} text-white p-2 h-4`} />
-              );
+              return <div key={p.id} className={`${color} text-white p-2 h-4`} />;
             })}
           </div>
         ))}
