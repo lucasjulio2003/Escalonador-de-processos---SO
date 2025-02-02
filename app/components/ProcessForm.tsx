@@ -4,10 +4,11 @@ import { Process } from "../lib/types";
 
 interface Props {
   setProcesses: (callback: (prev: Process[]) => Process[]) => void;
+  setGanttView: (value: boolean) => void;
   
 }
 
-export default function ProcessForm({ setProcesses }: Props) {
+export default function ProcessForm({ setProcesses, setGanttView}: Props) {
   // const { algorithm, setAlgorithm, quantum, setQuantum } = useScheduler()
   const [processesList, setProcessesList] = useState<Process[]>([]);
   // const [readyToExecute, setReadyToExecute] = useState(false);
@@ -59,6 +60,7 @@ export default function ProcessForm({ setProcesses }: Props) {
 
   const submitProcesses = () => {
     setProcesses(() => processesList);
+    setGanttView(false);
   };
 
   return (
