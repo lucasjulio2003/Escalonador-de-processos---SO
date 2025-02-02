@@ -3,10 +3,16 @@
 // lib/utils.ts
 import { Process } from "./types";
 
-export function simulateQueue(processes: Process[], algorithm: string, quantum: number, overhead: number) {
-  let scheduledProcesses: Process[] = []; // Lista de processos escalonados
+export function simulateQueue(
+  processes: Process[], algorithm: string, quantum: number, overhead: number
+) {
+  let scheduledProcesses: Process[] = [];
+  let currentTime = 0;
+  let history: { processes: Process[], overheadProcess: number | null }[] = [];
+  let queue: Process[] = [];
+  let overheadProcess: number | null = null;
 
-  // Escolhe o algoritmo de escalonamento
+  // 🔹 Choose the scheduling algorithm
   switch (algorithm) {
     case "FIFO":
       scheduledProcesses = fifo(processes);
@@ -22,84 +28,71 @@ export function simulateQueue(processes: Process[], algorithm: string, quantum: 
       break;
   }
 
-  let currentTime = 0; // Controla o tempo atual da simulação
-  const history: { processes: Process[], overheadProcess: number | null }[] = []; // Histórico de execução dos processos
-  const queue: Process[] = []; // Fila de processos prontos para execução
-  let overheadProcess: number | null = null; // Identifica se um processo sofreu sobrecarga
+  console.log("🔍 Processos escalonados para execução:", scheduledProcesses);
 
-  console.log("Processos escalonados:", scheduledProcesses);
+  while (scheduledProcesses.length > 0 || queue.length > 0) {
+    // 🔹 Add new processes to queue when they arrive
+    while (scheduledProcesses.length > 0 && scheduledProcesses[0].arrivalTime <= currentTime) {
+      let newProcess = scheduledProcesses.shift()!;
+      queue.push(newProcess);
+      console.log(`⏰ Tempo ${currentTime}: P${newProcess.id} chegou e entrou na fila.`);
+    }
 
-  while (scheduledProcesses.some((p) => p.executationTime > 0) || queue.length > 0) {
-    scheduledProcesses.forEach((p: Process) => {
-      if (p.arrivalTime <= currentTime && p.executationTime > 0 && !queue.includes(p)) {
-        queue.push(p);
-        console.log(`⏰ Tempo ${currentTime}: P${p.id} chegou à fila de prontos`);
-        p.executedTime = 0;
-        console.log("Fila de processos:", queue);
+    // 🔹 If no process is ready, fast forward time
+    if (queue.length === 0) {
+      if (scheduledProcesses.length > 0) {
+        currentTime = scheduledProcesses[0].arrivalTime;
+        console.log(`⏩ Avançando tempo para ${currentTime}`);
       }
-    });
+      continue;
+    }
 
+    // 🔹 Sort queue for SJF and EDF (shortest execution or earliest deadline)
+    if (algorithm === "SJF") {
+      queue.sort((a, b) => a.executationTime - b.executationTime);
+    } else if (algorithm === "EDF") {
+      queue.sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity));
+    }
 
-    if (queue.length > 0) {
-      if ((algorithm === "RR" || algorithm === "EDF") && overheadProcess !== null) {
-        for (let i = 0; i < overhead; i++) {
-          history.push({ processes: [...queue], overheadProcess });
-          currentTime++;
-        }
+    let process = queue[0];
 
-        // 🔴 Exibe detalhes do processo que sofreu sobrecarga
-        // let processOverhead = scheduledProcesses.find(p => p.id === overheadProcess);
-        // if (processOverhead) {
-        //   console.log(`⚠️ Tempo ${currentTime}: P${processOverhead.id} sofreu sobrecarga`, {
-        //     id: processOverhead.id,
-        //     arrivalTime: processOverhead.arrivalTime,
-        //     executationTime: processOverhead.executationTime,
-        //     remainingTime: processOverhead.remainingTime ?? processOverhead.executationTime,
-        //     deadline: processOverhead.deadline,
-        //     numPages: processOverhead.numPages,
-        //     systemOverhead: processOverhead.systemOverhead
-        //   });
-        // }
+    // 🔹 Handle Round Robin and EDF overhead
+    if ((algorithm === "RR" || algorithm === "EDF") && overheadProcess !== null) {
+      for (let i = 0; i < overhead; i++) {
+        history.push({ processes: [...queue], overheadProcess });
+        currentTime++;
+      }
+      overheadProcess = null;
+    }
 
-        overheadProcess = null;
-      } else {
-        let process = queue[0];
-        process.executationTime--;
-        process.executedTime++;
+    console.log(`🚀 Tempo ${currentTime}: Executando P${process.id}`);
+
+    if (algorithm === "RR" || algorithm === "EDF") {
+      let executionTime = Math.min(quantum, process.executationTime);
+      process.executationTime -= executionTime;
+      for (let i = 0; i < executionTime; i++) {
         history.push({ processes: [...queue], overheadProcess: null });
+        currentTime++;
+      }
 
-        if (process.executationTime === 0) {
-          queue.shift();
-        }
-
-        if (algorithm === "RR" || algorithm === "EDF") {
-          if (process.executedTime === quantum) {
-            if (queue.length > 1) {
-              console.log("entrou");
-
-              overheadProcess = process.id;
-              queue.push(queue.shift()!);
-              currentTime += overhead;
-            }
-          }
-        }
+      if (process.executationTime > 0) {
+        overheadProcess = process.id;
+        queue.push(queue.shift()!);
+      } else {
+        queue.shift();
       }
     } else {
-      history.push({ processes: [], overheadProcess: null });
+      // 🔹 Non-preemptive (FIFO, SJF)
+      for (let i = 0; i < process.executationTime; i++) {
+        history.push({ processes: [...queue], overheadProcess: null });
+        currentTime++;
+      }
+      process.completionTime = currentTime;
+      queue.shift();
     }
-
-    scheduledProcesses = scheduledProcesses.filter(p => p.executationTime > 0);
-
-    if (queue.length === 0 && scheduledProcesses.every(p => p.executationTime <= 0)) {
-      // console.log("🚨 Nenhum processo restante. Encerrando a simulação.");
-      break;
-    }
-
-    currentTime++;
   }
 
-  console.log("Histórico de execução:", history);
-
+  console.log("📊 Histórico de execução:", history);
   return history;
 }
 
@@ -157,8 +150,6 @@ export function sjf(processes: Process[]): Process[] {
     // 🔹 Ordena novamente após a chegada de novos processos
     queue.sort((a, b) => a.executationTime - b.executationTime);
   }
-
-  console.log("Resultado SJF:", result);
 
   return result;
 }
