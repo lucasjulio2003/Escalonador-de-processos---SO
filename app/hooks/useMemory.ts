@@ -5,7 +5,8 @@
   const MEMORY_SIZE = 50; // Definimos um tamanho fixo para a RAM
 
   export function useMemory() {
-    const [memory, setMemory] = useState<Page[]>([]); // Páginas atualmente na RAM
+    // Inicializa a memória com páginas do processo 0
+    const [memory, setMemory] = useState<Page[]>(Array.from({ length: MEMORY_SIZE }, (_, i) => ({ id: i, processId: 0 , inMemory: true})));
     const [pageFaults, setPageFaults] = useState(0); // Contador de faltas de página
     const [algorithm, setAlgorithm] = useState<"FIFO" | "LRU">("FIFO");
 

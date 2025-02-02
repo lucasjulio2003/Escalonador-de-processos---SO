@@ -77,6 +77,7 @@ export default function ProcessForm({ setProcesses }: Props) {
               <label>Chegada:</label>
               <input
                 type="number"
+                min={0}
                 value={draftProcess.arrivalTime}
                 onChange={(e) =>
                   setDraftProcess({ ...draftProcess, arrivalTime: Number(e.target.value) })
@@ -89,6 +90,7 @@ export default function ProcessForm({ setProcesses }: Props) {
               <label>Execução:</label>
               <input
                 type="number"
+                min={1}
                 value={draftProcess.executationTime}
                 onChange={(e) =>
                   setDraftProcess({ ...draftProcess, executationTime: Number(e.target.value) })
@@ -102,6 +104,7 @@ export default function ProcessForm({ setProcesses }: Props) {
               <label>Deadline:</label>
               <input
                 type="number"
+                min={0}
                 value={draftProcess.deadline}
                 onChange={(e) =>
                   setDraftProcess({ ...draftProcess, deadline: Number(e.target.value) })
@@ -114,6 +117,7 @@ export default function ProcessForm({ setProcesses }: Props) {
               <label>Páginas:</label>
               <input
                 type="number"
+                min={1}
                 value={draftProcess.numPages}
                 onChange={(e) =>
                   setDraftProcess({ ...draftProcess, numPages: Number(e.target.value) })
@@ -144,6 +148,7 @@ export default function ProcessForm({ setProcesses }: Props) {
                 <label>Chegada:</label>
                 <input
                   type="number"
+                  min={0}
                   value={process.arrivalTime}
                   onChange={(e) =>
                     updateProcess(process.id, "arrivalTime", Number(e.target.value))
@@ -156,6 +161,7 @@ export default function ProcessForm({ setProcesses }: Props) {
                 <label>Execução:</label>
                 <input
                   type="number"
+                  min={1}
                   value={process.executationTime}
                   onChange={(e) => 
                     {
@@ -174,6 +180,7 @@ export default function ProcessForm({ setProcesses }: Props) {
                 <label>Deadline:</label>
                 <input
                   type="number"
+                  min={0}
                   value={process.deadline}
                   onChange={(e) =>
                     updateProcess(process.id, "deadline", Number(e.target.value))
@@ -196,6 +203,7 @@ export default function ProcessForm({ setProcesses }: Props) {
                 <label>Páginas:</label>
                 <input
                   type="number"
+                  min={1}
                   value={process.numPages}
                   onChange={(e) =>
                     updateProcess(process.id, "numPages", Number(e.target.value))
