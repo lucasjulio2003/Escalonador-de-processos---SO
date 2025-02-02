@@ -1,98 +1,116 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prefer-const */
 // lib/utils.ts
+
+/**
+ * A universal, time-stepped simulation that handles FIFO, SJF, RR, EDF 
+ * in a way that the Gantt chart can show waiting times correctly.
+ */
 import { Process } from "./types";
 
 export function simulateQueue(
-  processes: Process[], algorithm: string, quantum: number, overhead: number
+  processes: Process[],
+  algorithm: string,
+  quantum: number,
+  overhead: number
 ) {
-  let scheduledProcesses: Process[] = [];
+  // Copy processes to avoid mutating original
+  const procs = processes.map((p) => ({
+    ...p,
+    remainingTime: p.executationTime, // ensure we have remainingTime for any type
+    executedTime: 0,                  // how many units this process has run
+  }));
+
   let currentTime = 0;
-  let history: { processes: Process[], overheadProcess: number | null }[] = [];
-  let queue: Process[] = [];
-  let overheadProcess: number | null = null;
+  let activeProcess: Process | null = null; // The process currently using CPU
+  let overheadTimeLeft = 0;                 // Tracks overhead for RR/EDF
+  let sliceTimeLeft = 0;                    // Tracks quantum usage for RR/EDF
 
-  // 🔹 Choose the scheduling algorithm
-  switch (algorithm) {
-    case "FIFO":
-      scheduledProcesses = fifo(processes);
-      break;
-    case "SJF":
-      scheduledProcesses = sjf(processes);
-      break;
-    case "EDF":
-      scheduledProcesses = edf(processes, quantum, overhead);
-      break;
-    case "RR":
-      scheduledProcesses = roundRobin(processes, quantum, overhead);
-      break;
-  }
+  // The queue of ready processes (but not currently running)
+  const readyQueue: Process[] = [];
 
-  console.log("🔍 Processos escalonados para execução:", scheduledProcesses);
+  // For the Gantt chart, record per time‐step:
+  //   processes[]: who is in the queue + running process
+  //   overheadProcess: if overhead is being applied
+  const history: { processes: Process[]; overheadProcess: number | null }[] = [];
 
-  while (scheduledProcesses.length > 0 || queue.length > 0) {
-    // 🔹 Add new processes to queue when they arrive
-    while (scheduledProcesses.length > 0 && scheduledProcesses[0].arrivalTime <= currentTime) {
-      let newProcess = scheduledProcesses.shift()!;
-      queue.push(newProcess);
-      console.log(`⏰ Tempo ${currentTime}: P${newProcess.id} chegou e entrou na fila.`);
+  // A convenient helper: check if we've finished all processes
+  const allDone = () => procs.every((p) => p.remainingTime <= 0);
+
+  while (!allDone() || activeProcess !== null) {
+    // 1️⃣ Add newly arrived processes to the ready queue
+    procs.forEach((p) => {
+      if (p.arrivalTime === currentTime) {
+        readyQueue.push(p);
+      }
+    });
+
+    // 2️⃣ If no active process and not in overhead, pick next from queue (if any)
+    if (activeProcess === null && overheadTimeLeft === 0 && readyQueue.length > 0) {
+      // Sort the queue if SJF or EDF before picking the next
+      if (algorithm === "SJF") {
+        readyQueue.sort((a, b) => a.executationTime - b.executationTime);
+      } else if (algorithm === "EDF") {
+        readyQueue.sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity));
+      }
+
+      // Pick next process from the front
+      activeProcess = readyQueue.shift()!;
+
+      // Initialize slice time if RR or EDF
+      if (algorithm === "RR" || algorithm === "EDF") {
+        sliceTimeLeft = Math.min(activeProcess.remainingTime, quantum);
+      }
     }
 
-    // 🔹 If no process is ready, fast forward time
-    if (queue.length === 0) {
-      if (scheduledProcesses.length > 0) {
-        currentTime = scheduledProcesses[0].arrivalTime;
-        console.log(`⏩ Avançando tempo para ${currentTime}`);
-      }
+    // 3️⃣ If we are in overhead time, just push overhead state & decrement overhead
+    if (overheadTimeLeft > 0) {
+      history.push({ processes: [...readyQueue], overheadProcess: activeProcess?.id ?? null });
+      overheadTimeLeft--;
+      currentTime++;
       continue;
     }
 
-    // 🔹 Sort queue for SJF and EDF (shortest execution or earliest deadline)
-    if (algorithm === "SJF") {
-      queue.sort((a, b) => a.executationTime - b.executationTime);
-    } else if (algorithm === "EDF") {
-      queue.sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity));
-    }
+    // 4️⃣ Execute 1 time unit if we have an active process
+    if (activeProcess) {
+      activeProcess.remainingTime--;
+      activeProcess.executedTime++;
 
-    let process = queue[0];
+      // Push current snapshot: activeProcess is front (green), others in queue (yellow)
+      history.push({
+        processes: [activeProcess, ...readyQueue], // running first, rest waiting
+        overheadProcess: null,
+      });
 
-    // 🔹 Handle Round Robin and EDF overhead
-    if ((algorithm === "RR" || algorithm === "EDF") && overheadProcess !== null) {
-      for (let i = 0; i < overhead; i++) {
-        history.push({ processes: [...queue], overheadProcess });
-        currentTime++;
-      }
-      overheadProcess = null;
-    }
+      currentTime++;
 
-    console.log(`🚀 Tempo ${currentTime}: Executando P${process.id}`);
-
-    if (algorithm === "RR" || algorithm === "EDF") {
-      let executionTime = Math.min(quantum, process.executationTime);
-      process.executationTime -= executionTime;
-      for (let i = 0; i < executionTime; i++) {
-        history.push({ processes: [...queue], overheadProcess: null });
-        currentTime++;
-      }
-
-      if (process.executationTime > 0) {
-        overheadProcess = process.id;
-        queue.push(queue.shift()!);
+      // 4a) If done, set completionTime and reset activeProcess
+      if (activeProcess.remainingTime <= 0) {
+        activeProcess.completionTime = currentTime;
+        activeProcess = null;
       } else {
-        queue.shift();
+        // 4b) If RR or EDF, update sliceTimeLeft
+        if (algorithm === "RR" || algorithm === "EDF") {
+          sliceTimeLeft--;
+          // If slice expired, we must push overhead + requeue the process (if still not done)
+          if (sliceTimeLeft === 0) {
+            overheadTimeLeft = overhead; // overhead to pay
+            if (activeProcess && activeProcess.remainingTime > 0) {
+              // Re-queue the active process
+              readyQueue.push(activeProcess);
+            }
+            activeProcess = null;
+          }
+        }
       }
     } else {
-      // 🔹 Non-preemptive (FIFO, SJF)
-      for (let i = 0; i < process.executationTime; i++) {
-        history.push({ processes: [...queue], overheadProcess: null });
-        currentTime++;
-      }
-      process.completionTime = currentTime;
-      queue.shift();
+      // 5️⃣ CPU is idle if we have no active process
+      // Push an idle snapshot
+      history.push({ processes: [], overheadProcess: null });
+      currentTime++;
     }
   }
 
-  console.log("📊 Histórico de execução:", history);
   return history;
 }
 
