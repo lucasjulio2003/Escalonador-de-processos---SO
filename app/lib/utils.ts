@@ -57,26 +57,23 @@ export function sjf(processes: Process[]): Process[] {
  * Round Robin - Considera um quantum fixo
  */
 export function roundRobin(processes: Process[], quantum: number, overhead: number): Process[] {
-
   let queue = [...processes.map(p => ({ ...p, remainingTime: p.executationTime }))];
   let result: Process[] = [];
   let time = 0;
 
-  let executionHistory: { id: number; executedTime: number }[] = [];
-
   while (queue.length > 0) {
-    let process = queue.shift()!;
-    let executionTime = Math.min(quantum, process.remainingTime);
+    let process = queue.shift()!; // Pega o primeiro processo da fila
 
+    let executionTime = Math.min(quantum, process.remainingTime); // Respeita o quantum
     process.remainingTime -= executionTime;
     time += executionTime;
 
-    // Adiciona sobrecarga apenas se o processo ainda tiver tempo restante
+    // Se o processo ainda não terminou, adicionamos a sobrecarga
     if (process.remainingTime > 0) {
-      time += overhead;
-      queue.push(process);
+      time += overhead; // Adiciona tempo de sobrecarga
+      queue.push(process); // Processo volta para o final da fila
     } else {
-      result.push({ ...process, completionTime: time });
+      result.push({ ...process, completionTime: time }); // Armazena o tempo de término
     }
   }
 
@@ -95,17 +92,18 @@ export function edf(processes: Process[], quantum: number, overhead: number): Pr
   let time = 0;
 
   while (queue.length > 0) {
-    queue.sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity)); // Ordena pelo menor deadline
-    let process = queue.shift()!;
+    // Ordena os processos pelo menor deadline
+    queue.sort((a, b) => (a.deadline ?? Infinity) - (b.deadline ?? Infinity));
+
+    let process = queue.shift()!; // Remove o primeiro processo (com menor deadline)
     let executionTime = Math.min(quantum, process.remainingTime);
 
     process.remainingTime -= executionTime;
     time += executionTime;
 
-    // Adiciona sobrecarga se o processo não terminou
     if (process.remainingTime > 0) {
-      time += overhead;
-      queue.push(process);
+      time += overhead; // Aplica a sobrecarga antes de voltar para a fila
+      queue.push(process); // Processo volta para a fila
     } else {
       result.push({ ...process, completionTime: time });
     }

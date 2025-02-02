@@ -3,12 +3,11 @@ import { Process } from "../lib/types";
 // import { useScheduler } from "../hooks/useScheduler";
 
 interface Props {
-  setProcesses: (callback: (prev: Process[]) => Process[]) => void;
-  setGanttView: (value: boolean) => void;
-  
+  setProcesses: (newProcesses: Process[]) => void; // Modificado para aceitar um array diretamente
 }
 
-export default function ProcessForm({ setProcesses, setGanttView}: Props) {
+
+export default function ProcessForm({ setProcesses }: Props) {
   // const { algorithm, setAlgorithm, quantum, setQuantum } = useScheduler()
   const [processesList, setProcessesList] = useState<Process[]>([]);
   // const [readyToExecute, setReadyToExecute] = useState(false);
@@ -59,9 +58,10 @@ export default function ProcessForm({ setProcesses, setGanttView}: Props) {
   };
 
   const submitProcesses = () => {
-    setProcesses(() => processesList);
-    setGanttView(false);
+    setProcesses(processesList); // Apenas salva os processos sem rodar imediatamente
   };
+  
+  
 
   return (
     <div className="p-4 flex flex-col gap-5 space-x-4 border rounded bg-gray-800 text-white">
