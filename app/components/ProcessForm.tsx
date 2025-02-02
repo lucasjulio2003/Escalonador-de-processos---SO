@@ -120,6 +120,7 @@ export default function ProcessForm({ setProcesses }: Props) {
               <input
                 type="number"
                 min={1}
+                max={10}
                 value={draftProcess.numPages}
                 onChange={(e) =>
                   setDraftProcess({ ...draftProcess, numPages: Number(e.target.value) })
@@ -206,6 +207,7 @@ export default function ProcessForm({ setProcesses }: Props) {
                 <input
                   type="number"
                   min={1}
+                  max={10}
                   value={process.numPages}
                   onChange={(e) =>
                     updateProcess(process.id, "numPages", Number(e.target.value))
