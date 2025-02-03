@@ -19,7 +19,7 @@ export default function GanttChart({
   { processes: Process[]; overheadProcess: number | null }[]
   >([]);
   const [displayIndex, setDisplayIndex] = useState(0);
-  const [turnaround, setTurnaround] = useState<number>(0); // Definido o estado 'turnaround'
+  const [turnaround, setTurnaround] = useState<number>(0);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -100,7 +100,7 @@ export default function GanttChart({
                 .slice()
                 .sort((a, b) => a.id - b.id)
                 .map((p) => {
-                  let color = "bg-gray-500"; // default: idle
+                  let color = "bg-gray-500";
 
                   // Only for EDF: if the process has a deadline and the current simulation time (i)
                   // equals the moment the deadline is reached, override the color to black.

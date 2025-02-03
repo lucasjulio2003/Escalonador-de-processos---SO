@@ -3,35 +3,38 @@ import { Process } from "../lib/types";
 // import { useScheduler } from "../hooks/useScheduler";
 
 interface Props {
-  setProcesses: (newProcesses: Process[]) => void; // Modificado para aceitar um array diretamente
+  setProcesses: (newProcesses: Process[]) => void;
 }
 
-
 export default function ProcessForm({ setProcesses }: Props) {
+
   // const { algorithm, setAlgorithm, quantum, setQuantum } = useScheduler()
+
   const [processesList, setProcessesList] = useState<Process[]>([]);
+
   // const [readyToExecute, setReadyToExecute] = useState(false);
+
   const [draftProcess, setDraftProcess] = useState<Process>({
-    id: 0, // ID temporário (não usado na lista final
+    id: 0,
     arrivalTime: 0,
     executationTime: 1,
     remainingTime: 1,
     deadline: 0,
     numPages: 1,
     systemOverhead: 0,
-    executedTime: 0, // Nova propriedade de sobrecarga do sistema
+    executedTime: 0,
   });
 
   const addProcess = () => {
     const newProcess: Process = {
       ...draftProcess,
-      id: processesList.length + 1, // Gera ID único baseado no tamanho da lista
-      remainingTime: draftProcess.executationTime, // Mantém o tempo restante igual ao de execução
+      id: processesList.length + 1, 
+      remainingTime: draftProcess.executationTime,
     };
     
     setProcessesList((prev) => [...prev, newProcess]);
     
-    // Reseta o draft para valores padrão
+    // valores padrão
     setDraftProcess({
       id: 0,
       arrivalTime: 0,
@@ -45,7 +48,7 @@ export default function ProcessForm({ setProcesses }: Props) {
   };
 
   const updateProcess = (id: number, field: keyof Process, value: number) => {
-    if (value < 0) return; // Impede valores negativos
+    if (value < 0) return;
   
     setProcessesList((prev) =>
       prev.map((process) =>
@@ -60,11 +63,9 @@ export default function ProcessForm({ setProcesses }: Props) {
   };
 
   const submitProcesses = () => {
-    setProcesses(processesList); // Apenas salva os processos sem rodar imediatamente
+    setProcesses(processesList);
   };
   
-  
-
   return (
     <div className="p-4 flex flex-col gap-5 space-x-4 border rounded bg-gray-800 text-white">
       <h2 className="text-xl mb-4">Gerenciamento de Processos</h2>

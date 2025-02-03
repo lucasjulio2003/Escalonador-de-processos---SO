@@ -1,8 +1,8 @@
 export interface Process {
     id: number;
-    arrivalTime: number; // Tempo de chegada
-    executationTime: number; // Tempo de execução
-    remainingTime: number; // Para Round Robin
+    arrivalTime: number; 
+    executationTime: number; 
+    remainingTime: number;
     deadline?: number,
     numPages: number,
     systemOverhead: number,
@@ -13,7 +13,7 @@ export interface Process {
   
 export interface Page {
   id: number;
-  processId: number; // ID do processo dono da página
-  inMemory: boolean; // Se está na RAM
-  lastAccess: number; // Para LRU
+  processId: number; 
+  inMemory: boolean; 
+  lastAccess: number;
 }

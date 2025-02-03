@@ -11,7 +11,7 @@ export default function Home() {
 
   const {
     processes,
-    saveProcesses, // Alterado para armazenar os processos sem executar
+    saveProcesses, 
     algorithm,
     setAlgorithm,
     quantum,
@@ -19,7 +19,7 @@ export default function Home() {
     overhead,
     setOverhead,
     runScheduler,
-    isRunning, // Estado que controla se os processos estão prontos
+    isRunning, 
   } = useScheduler();
   // const [overhead, setOverhead] = useState(1);
 
