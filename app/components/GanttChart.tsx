@@ -16,7 +16,7 @@ export default function GanttChart({
   isRunning: boolean;
 }) {
   const [history, setHistory] = useState<
-    { processes: Process[]; overheadProcess: number | null }[]
+  { processes: Process[]; overheadProcess: number | null }[]
   >([]);
   const [displayIndex, setDisplayIndex] = useState(0);
 
@@ -97,27 +97,25 @@ export default function GanttChart({
                 .map((p) => {
                   let color = "bg-gray-500"; // default: idle
 
-                  // If overhead is happening this time step...
-                  if (step.overheadProcess !== null) {
-                    // If *this* is the process that caused overhead -> red
+                  // Only for EDF: if the process has a deadline and the current simulation time (i)
+                  // equals the moment the deadline is reached, override the color to black.
+                  if (algorithm === "EDF" && p.deadline !== undefined && i === p.arrivalTime + p.deadline) {
+                    color = "bg-stone-800";
+                  } else if (step.overheadProcess !== null) {
+                    // If overhead is active during this step...
                     if (step.overheadProcess === p.id) {
                       color = "bg-red-500";
                     } else {
-                      // If process is in the queue at this time -> waiting (yellow)
-                      const idx = step.processes.findIndex(
-                        (proc) => proc.id === p.id
-                      );
+                      const idx = step.processes.findIndex((proc) => proc.id === p.id);
                       if (idx !== -1) {
                         color = "bg-yellow-500";
                       }
                     }
                   } else {
                     // Normal operation (no overhead)
-                    const idx = step.processes.findIndex(
-                      (proc) => proc.id === p.id
-                    );
+                    const idx = step.processes.findIndex((proc) => proc.id === p.id);
                     if (idx !== -1) {
-                      // The *first* in step.processes is the running one (green)
+                      // The first process in the array is the one executing (green)
                       color = idx === 0 ? "bg-green-500" : "bg-yellow-500";
                     }
                   }
