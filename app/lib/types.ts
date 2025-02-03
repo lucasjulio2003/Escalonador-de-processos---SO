@@ -1,4 +1,5 @@
 export interface Process {
+    originalIndex: number;
     id: number;
     arrivalTime: number; // Tempo de chegada
     executationTime: number; // Tempo de execução

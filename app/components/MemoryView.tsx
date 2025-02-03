@@ -5,21 +5,33 @@ import { useMemory } from "../hooks/useMemory";
 import { Process } from "../lib/types";
 import { simulateQueue } from "../lib/utils";
 
-export default function MemoryView({ processes, algorithm, quantum, overhead, isRunning }: { processes: Process[], algorithm: string, quantum: number, overhead: number , isRunning: boolean}) {
-  const { memory, pageFaults, loadPage, setAlgorithm } = useMemory();
+export default function MemoryView({
+  processes,
+  algorithm,
+  quantum,
+  overhead,
+  isRunning
+}: {
+  processes: Process[];
+  algorithm: string;
+  quantum: number;
+  overhead: number;
+  isRunning: boolean;
+}) {
+  const { memory, pageFaults, loadPage, algorithm: memAlgo, setAlgorithm } = useMemory();
 
-  const history = simulateQueue(processes, algorithm, quantum, overhead);
+  // Destructure simulationResult to obtain history only.
+  const simulationResult = simulateQueue(processes, algorithm, quantum, overhead);
+  const history = simulationResult.history;
   const [displayIndex, setDisplayIndex] = useState(0);
 
+  // Function to load pages for the currently running process.
   const loadPages = useCallback((process: Process) => {
-    if (!isRunning) {
-      setDisplayIndex(0);
-      return;
-    }
-    for (let i = 0; i < process?.numPages; i++) {
+    if (!process) return;
+    for (let i = 0; i < process.numPages; i++) {
       loadPage({ id: i, processId: process.id, inMemory: false });
     }
-  }, [isRunning, loadPage]);
+  }, [loadPage]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -37,12 +49,12 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
       <h2 className="text-xl">Memória RAM e Disco</h2>
       <p className="text-sm">Total de Page Faults: {pageFaults}</p>
 
-      {/* Escolha do algoritmo */}
+      {/* Seleção do algoritmo de substituição */}
       <div className="my-2">
         <label>Algoritmo de Substituição:</label>
         <select
           className="ml-2 p-2 border rounded"
-          value={algorithm}
+          value={memAlgo}
           onChange={(e) => setAlgorithm(e.target.value as any)}
         >
           <option value="FIFO">FIFO</option>
@@ -50,46 +62,44 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
         </select>
       </div>
       <div className="flex flex-row">
-        {/* Exibição da memória */}
-        { isRunning && <div className="grid grid-cols-10 gap-1.5 p-2 w-1/2">
-          {memory.map((page) => (
-                <div
+        {/* Exibição da RAM */}
+        { isRunning && (
+          <div className="grid grid-cols-10 gap-1.5 p-2 w-1/2">
+            {memory.map((page) => (
+              <div
                 key={`${page.processId}-${page.id}`}
                 className={`p-2 text-xs text-center border rounded h-12 flex items-center justify-center ${page.processId === 0 ? '' : 'bg-gray-500'}`}
-                >
-                {page.processId !== 0 && (
+              >
+                {page.processId !== 0 ? (
                   <>
-                  P{page.processId}
-                  <br />
-                  {page.id}
+                    P{page.processId} <br /> {page.id}
+                  </>
+                ) : (
+                  <>
+                    <br /> {page.id}
                   </>
                 )}
-                {page.processId == 0 && (
-                  <>
-                  <br />
-                  {page.id}
-                  </>
-                )}
-                </div>
-          ))}
-        </div>}
-        {/* Exibição do Disco */}
-        { isRunning && <div className="grid grid-cols-10 gap-1.5 p-2 w-1/2">
-          {memory.map((page) => (
-                <div
+              </div>
+            ))}
+          </div>
+        )}
+        {/* Exibição do Disco (páginas fora da RAM) */}
+        { isRunning && (
+          <div className="grid grid-cols-10 gap-1.5 p-2 w-1/2">
+            {memory.map((page) => (
+              <div
                 key={`${page.processId}-${page.id}`}
                 className={`p-2 text-xs text-center border rounded h-12 flex items-center justify-center ${page.processId === 0 ? 'bg-gray-500 text-transparent' : ''}`}
-                >
+              >
                 {page.processId !== 0 && (
                   <>
-                  P{page.processId}
-                  <br />
-                  {page.id}
+                    P{page.processId} <br /> {page.id}
                   </>
                 )}
-                </div>
-          ))}
-        </div>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

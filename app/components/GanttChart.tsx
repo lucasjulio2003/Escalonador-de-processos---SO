@@ -15,6 +15,7 @@ export default function GanttChart({
   overhead: number;
   isRunning: boolean;
 }) {
+  // Now the state holds an array of history steps
   const [history, setHistory] = useState<
     { processes: Process[]; overheadProcess: number | null }[]
   >([]);
@@ -22,8 +23,9 @@ export default function GanttChart({
 
   useEffect(() => {
     if (!isRunning) return;
-    const newHistory = simulateQueue(processes, algorithm, quantum, overhead);
-    setHistory(newHistory);
+    // Destructure to get only the history array
+    const simulationResult = simulateQueue(processes, algorithm, quantum, overhead);
+    setHistory(simulationResult.history);
     setDisplayIndex(0);
   }, [processes, algorithm, quantum, overhead, isRunning]);
 
@@ -66,7 +68,7 @@ export default function GanttChart({
 
       {isRunning && (
         <div className="flex space-x-2">
-          {/* Column of labels: top cell = time index, then processes */}
+          {/* Column of labels: top cell = time index, then process labels */}
           <div className="flex flex-col space-y-2">
             <div className="bg-gray-500 text-white p-1 text-[8px] h-4 flex justify-center items-center">
               t
@@ -90,20 +92,16 @@ export default function GanttChart({
               <div className="bg-blue-500 text-white p-1 text-[8px] h-4 flex justify-center items-center">
                 {i}
               </div>
-              {/* For each process, decide its color at time i */}
               {processes
                 .slice()
                 .sort((a, b) => a.id - b.id)
                 .map((p) => {
                   let color = "bg-gray-500"; // default: idle
 
-                  // If overhead is happening this time step...
                   if (step.overheadProcess !== null) {
-                    // If *this* is the process that caused overhead -> red
                     if (step.overheadProcess === p.id) {
                       color = "bg-red-500";
                     } else {
-                      // If process is in the queue at this time -> waiting (yellow)
                       const idx = step.processes.findIndex(
                         (proc) => proc.id === p.id
                       );
@@ -112,12 +110,10 @@ export default function GanttChart({
                       }
                     }
                   } else {
-                    // Normal operation (no overhead)
                     const idx = step.processes.findIndex(
                       (proc) => proc.id === p.id
                     );
                     if (idx !== -1) {
-                      // The *first* in step.processes is the running one (green)
                       color = idx === 0 ? "bg-green-500" : "bg-yellow-500";
                     }
                   }
