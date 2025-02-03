@@ -31,7 +31,7 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
   }, [displayIndex, loadPages, history]);
 
   return (
-    <div className="p-4 border rounded bg-gray-700 text-black my-4">
+    <div className="p-4 border rounded bg-gray-700 text-white my-4">
       <h2 className="text-xl">Memória RAM e Disco</h2>
       <p className="text-sm">Total de Page Faults: {pageFaults}</p>
 
@@ -39,7 +39,7 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
       <div className="my-2">
         <label>Algoritmo de Substituição:</label>
         <select
-          className="ml-2 p-2 border rounded"
+          className="ml-2 p-2 border rounded text-black"
           value={algorithmPage}
           onChange={(e) => setAlgorithm(e.target.value as any)}
         >

@@ -198,7 +198,7 @@ export default function ProcessForm({ setProcesses }: Props) {
                 onChange={(e) => 
                   setDraftProcess({ ...draftProcess, systemOverhead: Number(e.target.value) })
                 } 
-                className="p-2 m-2 border rounded text-black w-32" 
+                className="p-2 m-2 border rounded text-white w-32" 
                 /> */}
               </div>
 
