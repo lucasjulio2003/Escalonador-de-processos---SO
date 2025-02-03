@@ -30,10 +30,10 @@ export function simulateQueue(
   // Overhead tracking variables
   let overheadTimeLeft = 0;
   let lastOverheadTriggerId: number | null = null;
-  
+
   // For RR/EDF, track how many time units remain in the current quantum slice
   let sliceTimeLeft = 0;
-  
+
   // When a process's quantum expires, we store it here until overhead finishes.
   let switchingOutProcess: Process | null = null;
   // After overhead finishes, we store the process here, then add it to readyQueue.
@@ -55,7 +55,7 @@ export function simulateQueue(
         readyQueue.push(p);
       }
     });
-    
+
     // 1.5) After adding new arrivals, if there's a pending process from overhead,
     // add it now—this ensures any new arrivals at this time are ahead.
     if (pendingRequeue) {
@@ -86,7 +86,6 @@ export function simulateQueue(
         if (algorithm === "SJF") {
           readyQueue.sort((a, b) => a.executationTime - b.executationTime);
         } else if (algorithm === "EDF") {
-          // Dynamic EDF: sort based on effective time left until deadline:
           readyQueue.sort((a, b) => {
             const aTimeLeft = (a.deadline ?? Infinity) + a.arrivalTime - currentTime;
             const bTimeLeft = (b.deadline ?? Infinity) + b.arrivalTime - currentTime;
@@ -142,6 +141,7 @@ export function simulateQueue(
 
   return history;
 }
+
 
 /**
  * FIFO - Escalonamento First In, First Out
