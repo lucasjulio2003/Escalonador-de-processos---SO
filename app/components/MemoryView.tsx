@@ -6,7 +6,7 @@ import { Process } from "../lib/types";
 import { simulateQueue } from "../lib/utils";
 
 export default function MemoryView({ processes, algorithm, quantum, overhead, isRunning }: { processes: Process[], algorithm: string, quantum: number, overhead: number , isRunning: boolean}) {
-  const { memory, pageFaults, loadPage, setAlgorithm } = useMemory();
+  const { memory, pageFaults, loadPage, algorithmPage, setAlgorithm } = useMemory();
 
   const history = simulateQueue(processes, algorithm, quantum, overhead);
   const [displayIndex, setDisplayIndex] = useState(0);
@@ -17,7 +17,7 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
       return;
     }
     for (let i = 0; i < process?.numPages; i++) {
-      loadPage({ id: i, processId: process.id, inMemory: false });
+      loadPage({ id: i, processId: process.id, inMemory: false, lastAccess: 0 });
     }
   }, [isRunning, loadPage]);
 
@@ -26,9 +26,7 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
       setDisplayIndex((prev) => (prev < history.length - 1 ? prev + 1 : prev));
     }, 490);
     const currentProcess = history[displayIndex]?.processes[0];
-    console.log("Current Process: ", currentProcess);
     loadPages(currentProcess);
-    console.log(displayIndex);
     return () => clearInterval(interval);
   }, [displayIndex, loadPages, history]);
 
@@ -42,7 +40,7 @@ export default function MemoryView({ processes, algorithm, quantum, overhead, is
         <label>Algoritmo de Substituição:</label>
         <select
           className="ml-2 p-2 border rounded"
-          value={algorithm}
+          value={algorithmPage}
           onChange={(e) => setAlgorithm(e.target.value as any)}
         >
           <option value="FIFO">FIFO</option>

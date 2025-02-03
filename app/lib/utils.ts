@@ -282,9 +282,40 @@ export function fifoReplacement(memory: Page[], newPage: Page): Page[] {
  * Algoritmo LRU (Least Recently Used)
  * Remove a página menos recentemente usada.
  */
+
+let lruIndex = 0; // Índice de substituição LRU
 export function lruReplacement(memory: Page[], newPage: Page): Page[] {
-  return [...memory.slice(1), newPage];
+
+  // Se houver um espaço vazio (processId === 0), insere a página nova nele
+  const emptyIndex = memory.findIndex(page => page.processId === 0);
+  if (emptyIndex !== -1) {
+    memory[emptyIndex] = newPage;
+    memory[emptyIndex].lastAccess = Date.now();
+  } else {
+    // Substitui a página menos recentemente usada (LRU) pelo novo processo
+    memory[lruIndex] = newPage;
+
+    // Procura a página menos recentemente usada
+    let lruPageIndex = 0;
+    let lruPageAccess = memory[0].lastAccess;
+    for (let i = 1; i < memory.length; i++) {
+      if (memory[i].lastAccess < lruPageAccess) {
+        lruPageIndex = i;
+        lruPageAccess = memory[i].lastAccess;
+      }
+    }
+
+    // Atualiza o índice LRU para a próxima posição de substituição
+    lruIndex = lruPageIndex;
+  }
+
+  // Printa uma copia da memória
+  console.log("Memory:", memory.map((page) => ({ ...page })));
+
+  return memory;
 }
+
+
 
 /**
  * Verifica se todas as páginas de um processo estão na RAM antes da execução.
@@ -311,7 +342,6 @@ export async function executeProcessesWithDelay(
     let process = queue.shift()!;
 
     if (!canExecuteProcess(process, memory)) {
-      console.log(`Processo ${process.id} não pode executar (páginas ausentes na RAM)`);
       queue.push(process);
       continue;
     }

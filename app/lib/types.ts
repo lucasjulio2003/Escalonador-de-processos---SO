@@ -15,4 +15,5 @@ export interface Page {
   id: number;
   processId: number; // ID do processo dono da página
   inMemory: boolean; // Se está na RAM
+  lastAccess: number; // Para LRU
 }
