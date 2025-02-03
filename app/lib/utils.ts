@@ -364,6 +364,7 @@ export async function executeProcessesWithDelay(
 /**
  * Calcula o turnaround médio dos processos.
  */
+
 export function calculateTurnaround(processes: Process[]): number {
   let turnaroundSum = processes.reduce(
     (sum, p) => sum + (p.completionTime! - p.arrivalTime),
@@ -371,3 +372,4 @@ export function calculateTurnaround(processes: Process[]): number {
   );
   return processes.length > 0 ? turnaroundSum / processes.length : 0;
 }
+

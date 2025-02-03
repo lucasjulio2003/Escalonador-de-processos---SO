@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Process } from "../lib/types";
-import { simulateQueue } from "../lib/utils";
+import { simulateQueue, calculateTurnaround } from "../lib/utils";
 
 export default function GanttChart({
   processes,
@@ -19,12 +19,17 @@ export default function GanttChart({
   { processes: Process[]; overheadProcess: number | null }[]
   >([]);
   const [displayIndex, setDisplayIndex] = useState(0);
+  const [turnaround, setTurnaround] = useState<number>(0); // Definido o estado 'turnaround'
 
   useEffect(() => {
     if (!isRunning) return;
     const newHistory = simulateQueue(processes, algorithm, quantum, overhead);
     setHistory(newHistory);
     setDisplayIndex(0);
+
+    const avgTurnaround = calculateTurnaround(processes);
+    setTurnaround(avgTurnaround);
+
   }, [processes, algorithm, quantum, overhead, isRunning]);
 
   useEffect(() => {
@@ -128,6 +133,12 @@ export default function GanttChart({
           ))}
         </div>
       )}
+
+      {/* Exibir Turnaround Médio */}
+      <div className="mt-4 text-white text-lg">
+        <h3>Turnaround Médio: {turnaround.toFixed(2)} unidades de tempo</h3>
+      </div>
+
     </div>
   );
 }
