@@ -80,6 +80,9 @@ export default function MemoryView({
       }
       for (let i = 0; i < process.numPages; i++) {
         // Carrega a página na memória
+        if(process.id === 1 && i === 0) {
+          console.log("Passou aqui", i);
+        }
         loadPage({ id: i, processId: process.id, inMemory: false, lastAccess: 0 });
         // Procura a página correspondente no disco e, se encontrada, remove-a
         const pageFound = disk.find(
@@ -102,6 +105,9 @@ export default function MemoryView({
 
     const currentProcess = history[displayIndex]?.processes[0];
     if (currentProcess) {
+      if (currentProcess.id === 1) {
+        console.log("Process 1 loaded pages");
+      }
       loadPages(currentProcess);
     }
     return () => clearInterval(interval);

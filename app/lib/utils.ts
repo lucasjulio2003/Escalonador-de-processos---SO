@@ -269,6 +269,7 @@ export function lruReplacement(memory: Page[], newPage: Page): Page[] {
   } else {
     
     memory[lruIndex] = newPage;
+    console.log(lruIndex)
 
     
     let lruPageIndex = 0;
@@ -283,7 +284,9 @@ export function lruReplacement(memory: Page[], newPage: Page): Page[] {
     lruIndex = lruPageIndex;
   }
 
-  console.log("Memory:", memory.map((page) => ({ ...page })));
+  if (newPage.processId === 1 && newPage.id === 0) {
+    console.log("Memory:", memory.map((page) => ({ ...page })));
+  }
 
   return memory;
 }

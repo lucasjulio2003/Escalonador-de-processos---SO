@@ -3,7 +3,6 @@
 import ProcessForm from "./components/ProcessForm";
 import MemoryView from "./components/MemoryView";
 import GanttChart from "./components/GanttChart";
-// import ExecutionLog from "./components/ExecutionLogs";
 import { useScheduler } from "./hooks/useScheduler";
 // import SelectInputs from "./components/SelectInputs";
 
