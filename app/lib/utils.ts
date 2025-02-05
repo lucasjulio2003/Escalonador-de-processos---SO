@@ -348,4 +348,3 @@ export function calculateTurnaround(processes: Process[]): number {
   );
   return processes.length > 0 ? turnaroundSum / processes.length : 0;
 }
-
