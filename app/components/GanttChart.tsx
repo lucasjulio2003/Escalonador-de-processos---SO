@@ -25,11 +25,12 @@ function getCellColor(
   step: { processes: Process[]; overheadProcess: number | null },
   algorithm: string
 ): string {
-  // For EDF, only return black at the deadline moment if the process is present
+  // For EDF, mark all cells black after the deadline if the process is present and not during overhead
   if (
     algorithm === "EDF" &&
     p.deadline !== undefined &&
-    timeStep === p.arrivalTime + p.deadline &&
+    timeStep >= p.arrivalTime + p.deadline &&
+    step.overheadProcess === null &&
     step.processes.some((proc) => proc.id === p.id)
   ) {
     return "bg-stone-800";
@@ -180,7 +181,9 @@ export default function GanttChart({
                   if (
                     algorithm === "EDF" &&
                     p.deadline !== undefined &&
-                    i === p.arrivalTime + p.deadline
+                    i >= p.arrivalTime + p.deadline &&
+                    step.overheadProcess === null &&
+                    step.processes.some((proc) => proc.id === p.id)
                   ) {
                     color = "bg-stone-800";
                   } else if (step.overheadProcess !== null) {
