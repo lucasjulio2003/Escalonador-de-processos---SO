@@ -60,7 +60,7 @@ export default function Home() {
           <option value="EDF">EDF</option>
           <option value="RR">Round Robin</option>
         </select>
-
+        <section className="pb-5">
         {/* Exibir campo Quantum apenas se Round Robin for selecionado */}
         {["RR", "EDF"].includes(algorithm) && (
           <div className="inline-block ml-4">
@@ -90,7 +90,7 @@ export default function Home() {
             />
           </div>
         )}
-
+        </section>      
         {/* Botão de execução só funciona se os processos foram adicionados */}
         <button
           onClick={handleStartSimulation}
