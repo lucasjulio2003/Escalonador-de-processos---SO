@@ -380,7 +380,19 @@ function getCellColor(
     // Nenhum overhead ativo.
     const idx = step.processes.findIndex((proc) => proc.id === p.id);
     if (idx !== -1) {
-      return idx === 0 ? "bg-green-500" : "bg-yellow-500";
+      if (idx === 0) {
+        // Verificar se o processo está além do deadline
+        if (
+          algorithm === "EDF" &&
+          p.deadline !== undefined &&
+          timeStep >= p.arrivalTime + p.deadline + 1
+        ) {
+          return "bg-stone-800"; // deadline atingido, pintar de preto
+        }
+        return "bg-green-500"; // processo em execução
+      } else {
+        return "bg-yellow-500"; // processo esperando
+      }
     }
   }
   return "bg-gray-500"; // ocioso (processo não presente)
