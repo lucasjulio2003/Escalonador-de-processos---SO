@@ -145,7 +145,7 @@ export default function GanttChart({
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-4 h-4 bg-stone-800" />
-          <span>Deadline</span>
+          <span>Após Deadline</span>
         </div>
       </div>
 
