@@ -152,7 +152,7 @@ export default function MemoryView({
                   ) : (
                     <>
                       <br />
-                      {page.id}
+                      {"-"} {/* Mostra "-" quando a página está vazia */}
                     </>
                   )}
                 </div>
@@ -173,11 +173,16 @@ export default function MemoryView({
                     page.processId === 0 ? "bg-gray-500 text-transparent" : ""
                   }`}
                 >
-                  {page.processId !== 0 && (
+                  {page.processId !== 0 ? (
                     <>
                       P{page.processId}
                       <br />
                       {page.id}
+                    </>
+                  ) : (
+                    <>
+                      <br />
+                      {"-"} {/* Mostra "-" quando a página está vazia */}
                     </>
                   )}
                 </div>
@@ -187,5 +192,6 @@ export default function MemoryView({
         )}
       </div>
     </div>
-  );  
+  );
+   
 }

@@ -108,7 +108,7 @@ export default function Home() {
       {isRunning && <GanttChart processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} isRunning={isRunning} />}
 
       {/* Exibição da Memória */}
-      {isRunning && <MemoryView processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} isRunning={isRunning} />}
+      {<MemoryView processes={processes} algorithm={algorithm} quantum={quantum} overhead={overhead} isRunning={isRunning} />}
     </div>
   );
 }
