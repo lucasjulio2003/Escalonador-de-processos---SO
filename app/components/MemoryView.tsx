@@ -8,17 +8,19 @@ import { simulateQueue } from "../lib/utils";
 export default function MemoryView({
   processes,
   algorithm,
+  substitutionAlgorithm,  // Agora recebido como prop
   quantum,
   overhead,
   isRunning,
 }: {
   processes: Process[];
   algorithm: string;
+  substitutionAlgorithm: "FIFO" | "LRU";  // Tipagem para o algoritmo de substituição
   quantum: number;
   overhead: number;
   isRunning: boolean;
 }) {
-  const { memory, pageFaults, loadPage, algorithmPage, setAlgorithm } = useMemory();
+  const { memory, pageFaults, loadPage } = useMemory();
 
   // Cria todas as páginas que devem existir com base nos processos
   const allPages = useMemo(
@@ -79,10 +81,6 @@ export default function MemoryView({
         return;
       }
       for (let i = 0; i < process.numPages; i++) {
-        // Carrega a página na memória
-        if(process.id === 1 && i === 0) {
-          console.log("Passou aqui", i);
-        }
         loadPage({ id: i, processId: process.id, inMemory: false, lastAccess: 0 });
         // Procura a página correspondente no disco e, se encontrada, remove-a
         const pageFound = disk.find(
@@ -105,9 +103,6 @@ export default function MemoryView({
 
     const currentProcess = history[displayIndex]?.processes[0];
     if (currentProcess) {
-      if (currentProcess.id === 1) {
-        console.log("Process 1 loaded pages");
-      }
       loadPages(currentProcess);
     }
     return () => clearInterval(interval);
@@ -117,24 +112,12 @@ export default function MemoryView({
     <div className="p-4 border rounded bg-gray-700 text-white my-4">
       <h2 className="text-xl">Memória RAM e Disco</h2>
       <p className="text-sm">Total de Page Faults: {pageFaults}</p>
-  
-      {/* Escolha do algoritmo */}
-      <div className="my-2">
-        <label>Algoritmo de Substituição:</label>
-        <select
-          className="ml-2 p-2 border rounded text-black"
-          value={algorithmPage}
-          onChange={(e) => setAlgorithm(e.target.value as any)}
-        >
-          <option value="FIFO">FIFO</option>
-          <option value="LRU">LRU</option>
-        </select>
-      </div>
+
       <div className="flex flex-row">
         {/* Exibição da memória */}
         {isRunning && (
           <div className="w-1/2">
-            <h3 className="text-center text-lg font-semibold">RAM</h3> {/* Título da RAM */}
+            <h3 className="text-center text-lg font-semibold">RAM</h3>
             <div className="grid grid-cols-10 gap-1.5 p-2">
               {memory.map((page) => (
                 <div
@@ -160,11 +143,11 @@ export default function MemoryView({
             </div>
           </div>
         )}
-  
+
         {/* Exibição do Disco */}
         {isRunning && (
           <div className="w-1/2">
-            <h3 className="text-center text-lg font-semibold">Disco</h3> {/* Título do Disco */}
+            <h3 className="text-center text-lg font-semibold">Disco</h3>
             <div className="grid grid-cols-10 gap-1.5 p-2">
               {disk.map((page, index) => (
                 <div
@@ -193,5 +176,5 @@ export default function MemoryView({
       </div>
     </div>
   );
-   
 }
+
