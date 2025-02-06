@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Process } from "../lib/types";
+import { Process, Page } from "../lib/types";
 import { fifo, sjf, edf, roundRobin, calculateTurnaround } from "../lib/utils";
 
 export function useScheduler() {
@@ -11,6 +11,8 @@ export function useScheduler() {
   const [turnaroundAvg, setTurnaroundAvg] = useState<number>(0);
   const [isExecuting, setIsExecuting] = useState<boolean>(false);
   const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [disk, setDisk] = useState<Page[]>([]); // Estado para o disco
+  const [memory, setMemory] = useState<Page[]>([]); // Estado para a memória
 
   const setQuantumValue = (value: number) => {
     setQuantum(value);
@@ -24,7 +26,17 @@ export function useScheduler() {
   const saveProcesses = (newProcesses: Process[]) => {
     setOriginalProcesses(newProcesses);
     setProcesses(newProcesses);
-    setIsRunning(false); // Do not start simulation yet!
+    setIsRunning(false); // Não inicia a simulação imediatamente
+    setDisk([]); // Limpa o disco
+    setMemory([]); // Limpa a memória
+  };
+
+  // Function to reset the simulation
+  const resetScheduler = () => {
+    setProcesses([]); // Limpa os processos
+    setIsRunning(false); // Para a execução
+    setDisk([]); // Limpa o disco
+    setMemory([]); // Limpa a memória
   };
 
   // Use the original processes each time so the simulation order stays consistent.
@@ -71,8 +83,11 @@ export function useScheduler() {
     overhead,
     setOverhead: setOverheadValue,
     runScheduler,
+    resetScheduler,
     turnaroundAvg,
     isExecuting,
     isRunning,
+    disk,
+    memory,
   };
 }
