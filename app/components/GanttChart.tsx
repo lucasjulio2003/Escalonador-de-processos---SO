@@ -150,7 +150,7 @@ export default function GanttChart({
       </div>
 
       {isRunning && (
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 overflow-auto">
           {/* Column labels */}
           <div className="flex flex-col space-y-2">
             <div className="bg-gray-500 text-white p-1 text-[8px] h-4 flex justify-center items-center">
