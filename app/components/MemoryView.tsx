@@ -117,7 +117,7 @@ export default function MemoryView({
     <div className="p-4 border rounded bg-gray-700 text-white my-4">
       <h2 className="text-xl">Memória RAM e Disco</h2>
       <p className="text-sm">Total de Page Faults: {pageFaults}</p>
-
+  
       {/* Escolha do algoritmo */}
       <div className="my-2">
         <label>Algoritmo de Substituição:</label>
@@ -133,52 +133,59 @@ export default function MemoryView({
       <div className="flex flex-row">
         {/* Exibição da memória */}
         {isRunning && (
-          <div className="grid grid-cols-10 gap-1.5 p-2 w-1/2">
-            {memory.map((page) => (
-              <div
-                key={`${page.processId}-${page.id}`}
-                className={`p-2 text-xs text-center border rounded h-12 flex items-center justify-center ${
-                  page.processId === 0 ? "" : "bg-gray-500"
-                }`}
-              >
-                {page.processId !== 0 ? (
-                  <>
-                    P{page.processId}
-                    <br />
-                    {page.id}
-                  </>
-                ) : (
-                  <>
-                    <br />
-                    {page.id}
-                  </>
-                )}
-              </div>
-            ))}
+          <div className="w-1/2">
+            <h3 className="text-center text-lg font-semibold">RAM</h3> {/* Título da RAM */}
+            <div className="grid grid-cols-10 gap-1.5 p-2">
+              {memory.map((page) => (
+                <div
+                  key={`${page.processId}-${page.id}`}
+                  className={`p-2 text-xs text-center border rounded h-12 flex items-center justify-center ${
+                    page.processId === 0 ? "" : "bg-gray-500"
+                  }`}
+                >
+                  {page.processId !== 0 ? (
+                    <>
+                      P{page.processId}
+                      <br />
+                      {page.id}
+                    </>
+                  ) : (
+                    <>
+                      <br />
+                      {page.id}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
+  
         {/* Exibição do Disco */}
         {isRunning && (
-          <div className="grid grid-cols-10 gap-1.5 p-2 w-1/2">
-            {disk.map((page, index) => (
-              <div
-                key={`${page.processId}-${page.id}-${index}`}
-                className={`p-2 text-xs text-center border rounded h-12 flex items-center justify-center ${
-                  page.processId === 0 ? "bg-gray-500 text-transparent" : ""
-                }`}
-              >
-                {page.processId !== 0 && (
-                  <>
-                    P{page.processId}
-                    <br />
-                    {page.id}
-                  </>
-                )}
-              </div>
-            ))}
+          <div className="w-1/2">
+            <h3 className="text-center text-lg font-semibold">Disco</h3> {/* Título do Disco */}
+            <div className="grid grid-cols-10 gap-1.5 p-2">
+              {disk.map((page, index) => (
+                <div
+                  key={`${page.processId}-${page.id}-${index}`}
+                  className={`p-2 text-xs text-center border rounded h-12 flex items-center justify-center ${
+                    page.processId === 0 ? "bg-gray-500 text-transparent" : ""
+                  }`}
+                >
+                  {page.processId !== 0 && (
+                    <>
+                      P{page.processId}
+                      <br />
+                      {page.id}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
     </div>
-  );
+  );  
 }
