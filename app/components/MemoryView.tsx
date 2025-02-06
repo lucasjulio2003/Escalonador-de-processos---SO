@@ -8,7 +8,6 @@ import { simulateQueue } from "../lib/utils";
 export default function MemoryView({
   processes,
   algorithm,
-  substitutionAlgorithm,  // Agora recebido como prop
   quantum,
   overhead,
   isRunning,
