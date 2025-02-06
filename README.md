@@ -38,4 +38,4 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Authors
 
-Lucas Júlio de Souza, Elis Oliveira Vasconcelos, Jean Anderson Hugo de Jesus Santose, Amanda Vilas Boas 
+Lucas Júlio de Souza, Elis Oliveira Vasconcelos, Jean Anderson Hugo de Jesus Santos e Amanda Vilas Boas 
