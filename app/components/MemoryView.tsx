@@ -6,55 +6,55 @@ import { Process } from "../lib/types";
 import { simulateQueue } from "../lib/utils";
 
 export default function MemoryView({
-  processes,
-  algorithm,
-  substitutionAlgorithm,  // Agora recebido como prop
-  quantum,
-  overhead,
-  isRunning,
+  processes, // array de processos
+  algorithm, // algoritmo de escalonamento
+  substitutionAlgorithm,  // algoritmo de substituição (FIFO ou LRU)
+  quantum, // valor do quantum para o escalonamento
+  overhead, // custo overhead para o escalonamento
+  isRunning, // flag que indica se a simulação está em execução
 }: {
-  processes: Process[];
-  algorithm: string;
-  substitutionAlgorithm: "FIFO" | "LRU";  // Tipagem para o algoritmo de substituição
-  quantum: number;
-  overhead: number;
-  isRunning: boolean;
+  processes: Process[]; // tipagem dos processos
+  algorithm: string; // tipagem do algoritmo de escalonamento como string
+  substitutionAlgorithm: "FIFO" | "LRU"; // tipagem para o algoritmo de substituição
+  quantum: number; // tipagem do quantum como número
+  overhead: number; // tipagem do overhead como número
+  isRunning: boolean; // tipagem da flag de execução como boolean
 }) {
-  const { memory, pageFaults, loadPage } = useMemory();
+  const { memory, pageFaults, loadPage } = useMemory(); // obtém memória, contagem de pageFaults e função loadPage do hook useMemory
 
   // Cria todas as páginas que devem existir com base nos processos
   const allPages = useMemo(
     () =>
       processes.flatMap((process) =>
         Array.from({ length: process.numPages }, (_, i) => ({
-          id: i,
-          processId: process.id,
+          id: i, // identificador da página
+          processId: process.id, // associa a página ao identificador do processo
         }))
       ),
-    [processes]
+    [processes] // recalcula quando os processos mudam
   );
 
-  // Se o total de páginas deve ser 50, calcula quantas "vazias" (processId === 0) serão adicionadas
+  // Calcula quantas páginas "vazias" (processId === 0) serão adicionadas para completar 50 páginas
   const emptyPagesCount = Math.max(0, 50 - allPages.length);
 
-  // Armazena o disco em estado, iniciando com as páginas de todos os processos e as páginas vazias
+  // Inicializa o estado do disco com as páginas dos processos e as páginas vazias
   const [disk, setDisk] = useState(() => {
     return [
-      ...allPages,
+      ...allPages, // páginas dos processos
       ...Array.from({ length: emptyPagesCount }, (_, i) => ({
-        id: i,
-        processId: 0,
+        id: i, // identificador da página vazia
+        processId: 0, // processId 0 indica página vazia
       })),
     ];
   });
 
-  // (Opcional) Se os processos mudarem, você pode atualizar o disco
+  // Atualiza o estado do disco sempre que allPages mudar
   useEffect(() => {
     setDisk([
-      ...allPages,
+      ...allPages, // páginas dos processos
       ...Array.from({ length: Math.max(0, 50 - allPages.length) }, (_, i) => ({
-        id: i,
-        processId: 0,
+        id: i, // identificador da página vazia
+        processId: 0, // processId 0 indica página vazia
       })),
     ]);
   }, [allPages]);
@@ -64,57 +64,63 @@ export default function MemoryView({
     setDisk((prevDisk) =>
       prevDisk.map((page) =>
         page.processId === pageToRemove.processId && page.id === pageToRemove.id
-          ? { id: page.id, processId: 0 } // "Remove" a página, substituindo-a por uma página vazia
-          : page
+          ? { id: page.id, processId: 0 } // substitui a página encontrada por uma página vazia
+          : page // mantém a página inalterada se não for a que deve ser removida
       )
     );
   }, []);
 
+  // Simula a fila de processos de acordo com o algoritmo, quantum e overhead
   const history = simulateQueue(processes, algorithm, quantum, overhead);
-  const [displayIndex, setDisplayIndex] = useState(0);
+  const [displayIndex, setDisplayIndex] = useState(0); // índice que controla o processo atual na exibição
 
-  // Função que carrega as páginas do processo atual e remove as mesmas do disco
+  // Carrega as páginas do processo atual e remove as páginas carregadas do disco
   const loadPages = useCallback(
     (process: Process) => {
       if (!isRunning) {
-        setDisplayIndex(0);
+        setDisplayIndex(0); // reinicia o índice se a simulação não estiver rodando
         return;
       }
       for (let i = 0; i < process.numPages; i++) {
+        // Carrega a página na memória
         loadPage({ id: i, processId: process.id, inMemory: false, lastAccess: 0 });
-        // Procura a página correspondente no disco e, se encontrada, remove-a
+        // Procura a página correspondente no disco
         const pageFound = disk.find(
           (page) => page.processId === process.id && page.id === i
         );
         if (pageFound && pageFound.processId !== 0) {
-          removeDisk(pageFound);
+          removeDisk(pageFound); // remove a página do disco se não for vazia
         }
       }
     },
-    [isRunning, loadPage, disk, removeDisk]
+    [isRunning, loadPage, disk, removeDisk] // dependências do useCallback
   );
 
+  // useEffect para controlar a atualização da simulação
   useEffect(() => {
     if (!isRunning) return;
 
     const interval = setInterval(() => {
+      // Atualiza o índice de exibição para o próximo processo, se existir
       setDisplayIndex((prev) => (prev < history.length - 1 ? prev + 1 : prev));
-    }, 490);
+    }, 490); // intervalo de 490ms entre cada atualização
 
+    // Obtém o processo atual da simulação
     const currentProcess = history[displayIndex]?.processes[0];
     if (currentProcess) {
-      loadPages(currentProcess);
+      loadPages(currentProcess); // carrega as páginas do processo atual
     }
+    // Limpa o intervalo quando o componente desmonta ou as dependências mudam
     return () => clearInterval(interval);
   }, [displayIndex, history, loadPages, isRunning]);
 
   return (
     <div className="p-4 border rounded bg-gray-700 text-white my-4">
-      <h2 className="text-xl">Memória RAM e Disco</h2>
-      <p className="text-sm">Total de Page Faults: {pageFaults}</p>
+      <h2 className="text-xl">Memória RAM e Disco</h2> {/* Título da seção */}
+      <p className="text-sm">Total de Page Faults: {pageFaults}</p> {/* Exibe o total de page faults */}
 
       <div className="flex flex-row">
-        {/* Exibição da memória */}
+        {/* Se a simulação está em execução, exibe a memória RAM */}
         {isRunning && (
           <div className="w-1/2">
             <h3 className="text-center text-lg font-semibold">RAM</h3>
@@ -128,14 +134,14 @@ export default function MemoryView({
                 >
                   {page.processId !== 0 ? (
                     <>
-                      P{page.processId}
+                      P{page.processId} {/* Exibe o id do processo */}
                       <br />
-                      {page.id}
+                      {page.id} {/* Exibe o id da página */}
                     </>
                   ) : (
                     <>
                       <br />
-                      {"-"} {/* Mostra "-" quando a página está vazia */}
+                      {"-"} {/* Exibe "-" para páginas vazias */}
                     </>
                   )}
                 </div>
@@ -144,7 +150,7 @@ export default function MemoryView({
           </div>
         )}
 
-        {/* Exibição do Disco */}
+        {/* Se a simulação está em execução, exibe o disco */}
         {isRunning && (
           <div className="w-1/2">
             <h3 className="text-center text-lg font-semibold">Disco</h3>
@@ -158,14 +164,14 @@ export default function MemoryView({
                 >
                   {page.processId !== 0 ? (
                     <>
-                      P{page.processId}
+                      P{page.processId} {/* Exibe o id do processo */}
                       <br />
-                      {page.id}
+                      {page.id} {/* Exibe o id da página */}
                     </>
                   ) : (
                     <>
                       <br />
-                      {"-"} {/* Mostra "-" quando a página está vazia */}
+                      {"-"} {/* Exibe "-" para páginas vazias */}
                     </>
                   )}
                 </div>
